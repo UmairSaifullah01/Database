@@ -1,0 +1,20 @@
+{
+	"name": "com.thebaddest.databasemodule",
+	"version": "1.0.0",
+	"displayName": "DatabaseModule",
+	"description": "Database Module for Unity Game",
+	"unity": "2020.3",
+	"author": {
+		"name": "Umair Saifullah",
+		"email": "contact@umairsaifullah.com",
+		"url": "https://www.umairsaifullah.com"
+	},
+	"documentationUrl": "https://github.com/UmairSaifullah01/Database",
+	"repository": {
+		"url": "https://github.com/UmairSaifullah01/Database",
+		"type": "https://github.com/UmairSaifullah01/Database.git",
+		"revision": ""
+	},
+	"dependencies": {}
+}
+			
