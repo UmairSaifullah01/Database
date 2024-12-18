@@ -4,6 +4,13 @@
 	"displayName": "DatabaseModule",
 	"description": "Database Module for Unity Game",
 	"unity": "2020.3",
+	"samples": [
+		{
+			"displayName": "LeaderBoard Local Sample",
+			"description": "LeaderBoard Local Sample in which a user find his score and rank in the leaderboard",
+			"path": "Samples~"
+		}
+	],
 	"author": {
 		"name": "Umair Saifullah",
 		"email": "contact@umairsaifullah.com",

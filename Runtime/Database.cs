@@ -6,7 +6,7 @@ namespace THEBADDEST.DatabaseModule
 {
 
 
-	[CreateAssetMenu(menuName = "Database/Database", fileName = "Database")]
+	[CreateAssetMenu(menuName = "THEBADDEST/Database/Database", fileName = "Database")]
 	public class Database : ScriptableObject,IDatabase
 	{
 		private Dictionary<string, TableBase> tableDictionary = new Dictionary<string, TableBase>();
