@@ -11,7 +11,7 @@ namespace THEBADDEST.DatabaseModule
 	{
 		private const string DefaultDatabasePath   = "Assets/Database.asset";
 		private const string ResourcesDatabasePath = "GameDatabase";
-		[MenuItem("Database/Initialize Database")]
+		[MenuItem("Tools/THEBADDEST/Database/Initialize Database")]
 		public static void InitializeDatabase()
 		{
 			var database = FindOrCreateDatabase();
@@ -19,7 +19,7 @@ namespace THEBADDEST.DatabaseModule
 			Debug.Log("Database initialized.");
 		}
 
-		[MenuItem("Database/Auto-Register Tables")]
+		[MenuItem("Tools/THEBADDEST/Database/Auto-Register Tables")]
 		public static void AutoRegisterTables()
 		{
 			var database = FindOrCreateDatabase();
@@ -39,7 +39,7 @@ namespace THEBADDEST.DatabaseModule
 			Debug.Log($"Auto-registered {tableAssets.Count} tables to the Database.");
 		}
 
-		[MenuItem("Database/Create Table Drive Class")]
+		[MenuItem("Tools/THEBADDEST/Database/Create Table Drive Class")]
 		public static void CreateTableDriveClass()
 		{
 			// Prompt the user to select the name of the derived class
@@ -68,13 +68,31 @@ namespace THEBADDEST.DatabaseModule
 				Directory.CreateDirectory(directory);
 			}
 
-			var content = GenerateTableClassContent(className);
+			var content = GenerateTableClass(className);
 			File.WriteAllText(filePath, content);
 
 			AssetDatabase.Refresh();
 			Debug.Log($"Table drive class '{className}' created at '{filePath}'.");
 		}
 
+		private static string GenerateTableClass(string className)
+		{
+			return $@"
+public class {className}Table : Table<{className}>
+{{
+    public {className}Table() : base()
+    {{
+    }}
+
+    // Add your custom table logic here.
+}}
+
+[System.Serializable]
+public class {className}
+{{
+    // Add your custom fields here.
+}}";
+		}
 		private static string GenerateTableClassContent(string className)
 		{
 			return $@"using UnityEngine;

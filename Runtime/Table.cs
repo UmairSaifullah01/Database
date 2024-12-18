@@ -10,10 +10,15 @@ namespace THEBADDEST.DatabaseModule
 	{
 		[SerializeField] private string  tableName;
 		[SerializeField] private List<T> entries = new List<T>();
-
+		[SerializeField]private TableAdapter adapter;
 		public IReadOnlyList<T> Entries => entries;
 
 		public override string GetTableName() => string.IsNullOrEmpty(tableName) ? typeof(T).Name : tableName;
+
+		public override void Initialize()
+		{
+			adapter?.Deserialize<T>(this);
+		}
 
 		public T GetRecord(int id)
 		{

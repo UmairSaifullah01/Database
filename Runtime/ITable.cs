@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+
+
 namespace THEBADDEST.DatabaseModule
 {
 
@@ -18,6 +21,11 @@ namespace THEBADDEST.DatabaseModule
 	}
 	public interface ITable<TRecord> :ITable
 	{
+
+		/// <summary>
+		/// Returns a read-only list of all records in the table.
+		/// </summary>
+		public IReadOnlyList<TRecord> Entries { get; }
 		/// <summary>
 		/// Retrieves a record from the table.
 		/// </summary>
