@@ -15,7 +15,7 @@ namespace THEBADDEST.DatabaseModule
 		private string assetName        = "NewTable";
 		private string targetFolderPath = "Assets";
 
-		[MenuItem("Database/Table Asset Creator")]
+		[MenuItem("Tools/THEBADDEST/Database/Table Asset Creator")]
 		public static void ShowWindow()
 		{
 			var window = GetWindow<TableAssetCreatorWindow>("Table Asset Creator");

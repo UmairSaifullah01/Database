@@ -13,8 +13,6 @@ namespace THEBADDEST.DatabaseModule
 
 		[SerializeField]
 		private List<TableBase> tables = new List<TableBase>();
-
-		
 		
 		public void Initialize()
 		{
