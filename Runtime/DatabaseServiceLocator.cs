@@ -15,7 +15,7 @@ namespace THEBADDEST.DatabaseModule
 		static IServiceLocator serviceLocator;
 		static DatabaseServiceLocator()
 		{
-			serviceLocator = new ServiceLocator();
+			serviceLocator = ServiceLocator.Global;
 			var database = Resources.Load<Database>(DataBasePath);
 			database.Initialize();
 			serviceLocator.RegisterService(database);

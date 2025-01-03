@@ -7,6 +7,9 @@ namespace THEBADDEST
 		void     RegisterService<TService>(TService service);
 		void     UnregisterService<TService>();
 		TService GetService<TService>();
+
+		void Clear();
+
 	}
 
 

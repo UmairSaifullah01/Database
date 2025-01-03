@@ -55,7 +55,7 @@ namespace THEBADDEST.DatabaseModule
 
 			// Create the class file
 			var filePath = EditorUtility.SaveFilePanel("Save Table Drive Class", "Assets", className, "cs");
-			className = Path.GetFileNameWithoutExtension(filePath);
+			className = Path.GetFileNameWithoutExtension(filePath).Replace("Table","");
 			if (string.IsNullOrWhiteSpace(filePath))
 			{
 				Debug.LogWarning("Table drive class creation cancelled.");
@@ -78,19 +78,22 @@ namespace THEBADDEST.DatabaseModule
 		private static string GenerateTableClass(string className)
 		{
 			return $@"
-public class {className}Table : Table<{className}>
+namespace THEBADDEST.DatabaseModule
 {{
-    public {className}Table() : base()
+    public class {className}Table : Table<{className}>
     {{
+        public {className}Table() : base()
+        {{
+        }}
+
+        // Add your custom table logic here.
     }}
 
-    // Add your custom table logic here.
-}}
-
-[System.Serializable]
-public class {className}
-{{
-    // Add your custom fields here.
+    [System.Serializable]
+    public class {className}
+    {{
+        // Add your custom fields here.
+    }}
 }}";
 		}
 		private static string GenerateTableClassContent(string className)
