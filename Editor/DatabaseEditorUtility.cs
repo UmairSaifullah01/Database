@@ -9,7 +9,7 @@ namespace THEBADDEST.DatabaseModule
 
 	public static class DatabaseEditorUtility
 	{
-		private const string DefaultDatabasePath   = "Assets/Database.asset";
+		private const string DefaultDatabasePath   = "Assets/Resources/GameDatabase.asset";
 		private const string ResourcesDatabasePath = "GameDatabase";
 		[MenuItem("Tools/THEBADDEST/Database/Initialize Database")]
 		public static void InitializeDatabase()
@@ -118,10 +118,6 @@ public class {className} : TableBase
 				.Select(AssetDatabase.GUIDToAssetPath)
 				.Select(AssetDatabase.LoadAssetAtPath<Database>)
 				.FirstOrDefault();
-			if (database == null)
-			{
-				database = Resources.Load<Database>(ResourcesDatabasePath);;
-			}
 			
 			if (database == null)
 			{
