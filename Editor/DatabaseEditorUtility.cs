@@ -121,6 +121,11 @@ public class {className} : TableBase
 			
 			if (database == null)
 			{
+				var databasePath = Path.GetDirectoryName("Assets/Resources/");
+				if (!Directory.Exists(databasePath))
+				{
+					Directory.CreateDirectory(databasePath);
+				}
 				database = ScriptableObject.CreateInstance<Database>();
 				AssetDatabase.CreateAsset(database, DefaultDatabasePath);
 				AssetDatabase.SaveAssets();
