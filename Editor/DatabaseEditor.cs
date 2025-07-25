@@ -16,11 +16,14 @@ public class DatabaseEditor : EditorWindow
     private Type[] tableTypes;
     private int selectedTypeIndex;
     private string newTableName = "NewTable";
+    private bool showTableControls = false;
+    // Add this helper for hover effect
+    private int hoveredTabIndex = -1;
 
     [MenuItem("Tools/THEBADDEST/Database/Database Editor")]
     public static void ShowWindow()
     {
-        var window = GetWindow<DatabaseEditor>("Database Editor");
+        var window = GetWindow<DatabaseEditor>("Game Database");
         window.Show();
     }
 
@@ -50,8 +53,11 @@ public class DatabaseEditor : EditorWindow
 
     private void OnGUI()
     {
-        GUILayout.Label("Database Editor", EditorStyles.boldLabel);
-
+        // Main title
+        GUILayout.Space(8);
+        GUIStyle mainTitleStyle = new GUIStyle(EditorStyles.boldLabel) { fontSize = 20, alignment = TextAnchor.MiddleCenter };
+        GUILayout.Label("Game Database", mainTitleStyle, GUILayout.ExpandWidth(true));
+        GUILayout.Space(8);
         if (database == null)
         {
             EditorGUILayout.HelpBox("No Database asset found. Please create one using the DatabaseEditorUtility.", MessageType.Warning);
@@ -71,20 +77,16 @@ public class DatabaseEditor : EditorWindow
 
         serializedDatabase.Update();
 
-        // Add New Table area at the very top, single line
+        // Top bar: Initialize, table dropdown, refresh
         EditorGUILayout.BeginHorizontal();
-        newTableName = EditorGUILayout.TextField(newTableName, GUILayout.Width(180));
-        if (tableTypes.Length == 0)
+        if (GUILayout.Button("Initialize", GUILayout.Width(100)))
         {
-            EditorGUILayout.LabelField("No TableBase-derived classes found.", GUILayout.Width(220));
+            DatabaseEditorUtility.InitializeDatabase();
+            OnEnable();
         }
-        else
+        if (GUILayout.Button("Table",GUILayout.Width(100) ))
         {
-            selectedTypeIndex = EditorGUILayout.Popup(selectedTypeIndex, tableTypes.Select(t => t.Name).ToArray(), GUILayout.Width(180));
-        }
-        if (GUILayout.Button("Create and Add Table", GUILayout.Width(180)))
-        {
-            CreateAndAddTable();
+            showTableControls = !showTableControls;
         }
         if (GUILayout.Button("Refresh", GUILayout.Width(100)))
         {
@@ -92,13 +94,41 @@ public class DatabaseEditor : EditorWindow
             OnEnable();
         }
         EditorGUILayout.EndHorizontal();
-        GUILayout.Space(16);
+        GUILayout.Space(8);
+        // Show table creation controls and Create Table Class only when toggled
+        if (showTableControls)
+        {
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField("Table Name :", GUILayout.Width(70));
+            newTableName = EditorGUILayout.TextField(newTableName,GUILayout.Width(180));
+            if (tableTypes.Length > 0)
+            {
+                selectedTypeIndex = EditorGUILayout.Popup(selectedTypeIndex, tableTypes.Select(t => t.Name).ToArray(), GUILayout.Width(180));
+            }
+            
+            if (GUILayout.Button("Create and Add Table", GUILayout.Width(180)))
+            {
+                CreateAndAddTable();
+            }
+            GUILayout.Space(8);
+            Rect vSepRect = GUILayoutUtility.GetRect(2, 24, GUILayout.Width(2), GUILayout.Height(24));
+            EditorGUI.DrawRect(vSepRect, new Color(0.3f, 0.3f, 0.3f, 1f));
+            GUILayout.Space(8);
+            if (GUILayout.Button("Create Table Class", GUILayout.Width(150)))
+            {
+                DatabaseEditorUtility.CreateTableDriveClass();
+                OnEnable();
+            }
+            EditorGUILayout.EndHorizontal();
+            GUILayout.Space(4);
+        }
 
         // Draw tab bar for tables with wrapping
         float windowWidth = position.width - 20;
         float currentRowWidth = 0;
         float tabWidth = 150;
-        float tabSpacing = 4;
+        float tabSpacing = 2;
+        float tabHeight = 22;
         EditorGUILayout.BeginHorizontal();
         for (int i = 0; i < tablesProperty.arraySize; i++)
         {
@@ -113,68 +143,55 @@ public class DatabaseEditor : EditorWindow
                 currentRowWidth = 0;
             }
 
-            // Draw tab as a box with two buttons inside
-            EditorGUILayout.BeginVertical(GUI.skin.box, GUILayout.Width(tabWidth));
-            EditorGUILayout.BeginHorizontal();
-            float mainBtnWidth = tabWidth * 0.8f;
-            float xBtnWidth = tabWidth * 0.2f;
-
-            GUIStyle mainTabStyle = new GUIStyle(GUI.skin.button);
-            if (i == selectedTableIndex)
-            {
-                mainTabStyle.normal.background = MakeTex(2, 2, new Color(0.2f, 0.4f, 0.8f, 1f)); // blue
-                mainTabStyle.normal.textColor = Color.white;
-            }
-            else
-            {
-                mainTabStyle.normal.background = MakeTex(2, 2, new Color(0.3f, 0.3f, 0.3f, 1f)); // gray
-                mainTabStyle.normal.textColor = Color.white;
-            }
-
-            if (GUILayout.Button(tableObj.GetTableName(), mainTabStyle, GUILayout.Width(mainBtnWidth)))
+            // Native Unity tab style
+            GUIStyle tabStyle = EditorStyles.toolbarButton;
+            EditorGUILayout.BeginHorizontal(GUILayout.Width(tabWidth), GUILayout.Height(tabHeight));
+            if (GUILayout.Button(tableObj.GetTableName(), tabStyle, GUILayout.Width(tabWidth - 20), GUILayout.Height(tabHeight)))
             {
                 selectedTableIndex = i;
             }
-
-            Color prevBg = GUI.backgroundColor;
-            GUI.backgroundColor = Color.red;
-            if (GUILayout.Button("x", GUILayout.Width(xBtnWidth)))
+            // Native mini close button
+            if (GUILayout.Button("x", EditorStyles.miniButton, GUILayout.Width(18), GUILayout.Height(tabHeight)))
             {
                 tablesProperty.DeleteArrayElementAtIndex(i);
                 if (selectedTableIndex >= i && selectedTableIndex > 0)
                     selectedTableIndex--;
                 serializedDatabase.ApplyModifiedProperties();
                 EditorUtility.SetDirty(database);
-                GUI.backgroundColor = prevBg;
-                EditorGUILayout.EndHorizontal();
-                EditorGUILayout.EndVertical();
                 break;
             }
-            GUI.backgroundColor = prevBg;
             EditorGUILayout.EndHorizontal();
-            EditorGUILayout.EndVertical();
-
+            GUILayout.Space(tabSpacing);
             currentRowWidth += tabWidth + tabSpacing;
         }
         EditorGUILayout.EndHorizontal();
 
-        GUILayout.Space(10);
+        GUILayout.Space(14);
 
-        // Show inspector for selected table
+        // Section title for table details
+        GUIStyle sectionTitleStyle = new GUIStyle(EditorStyles.boldLabel) { fontSize = 16, alignment = TextAnchor.MiddleLeft };
+        GUILayout.Label("Table Details", sectionTitleStyle);
+
+        // Show inspector for selected table in a boxed area with colored header
         if (tablesProperty.arraySize > 0 && selectedTableIndex < tablesProperty.arraySize)
         {
             var tableProp = tablesProperty.GetArrayElementAtIndex(selectedTableIndex);
             var tableObj = tableProp.objectReferenceValue as TableBase;
             if (tableObj != null)
             {
-                GUILayout.Label(tableObj.GetTableName() + " Details", EditorStyles.boldLabel);
-                inspectorScroll = EditorGUILayout.BeginScrollView(inspectorScroll, GUILayout.ExpandHeight(true));
+                GUILayout.BeginVertical(GUI.skin.box);
+                Rect headerRect = GUILayoutUtility.GetRect(position.width - 32, 32, GUILayout.ExpandWidth(true));
+                EditorGUI.DrawRect(headerRect, new Color(0.18f, 0.22f, 0.32f, 1f));
+                GUI.Label(headerRect, tableObj.GetTableName() + " Details", new GUIStyle(EditorStyles.boldLabel) { alignment = TextAnchor.MiddleLeft, fontSize = 14, normal = { textColor = Color.white } });
+                GUILayout.Space(4);
+                inspectorScroll = EditorGUILayout.BeginScrollView(inspectorScroll, GUILayout.ExpandHeight(true), GUILayout.MinHeight(200));
                 Editor editor = Editor.CreateEditor(tableObj);
                 if (editor != null)
                 {
                     editor.OnInspectorGUI();
                 }
                 EditorGUILayout.EndScrollView();
+                GUILayout.EndVertical();
             }
         }
         else
@@ -217,5 +234,25 @@ public class DatabaseEditor : EditorWindow
         EditorUtility.SetDirty(database);
         selectedTableIndex = tablesProperty.arraySize - 1;
         Debug.Log($"Created and added table '{newTableName}' to the Database.");
+    }
+    // Add this helper for a modern tab style
+    private GUIStyle GetTabStyle(bool isActive, bool isHover)
+    {
+        var style = new GUIStyle(GUI.skin.button);
+        style.margin = new RectOffset(8, 8, 8, 8);
+        style.padding = new RectOffset(18, 18, 6, 6);
+        style.border = new RectOffset(16, 16, 16, 16);
+        style.fixedHeight = 36;
+        style.alignment = TextAnchor.MiddleCenter;
+        style.fontSize = 14;
+        style.fontStyle = FontStyle.Bold;
+        style.normal.textColor = Color.white;
+        style.hover.textColor = Color.white;
+        style.active.textColor = Color.white;
+        Color baseColor = isActive ? new Color(0.18f, 0.42f, 1f, 1f) : (isHover ? new Color(0.25f, 0.25f, 0.4f, 1f) : new Color(0.22f, 0.22f, 0.22f, 1f));
+        style.normal.background = MakeTex(2, 2, baseColor);
+        style.hover.background = MakeTex(2, 2, baseColor * 1.1f);
+        style.active.background = MakeTex(2, 2, baseColor * 0.95f);
+        return style;
     }
 } 

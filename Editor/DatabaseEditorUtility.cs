@@ -35,7 +35,8 @@ namespace THEBADDEST.DatabaseModule
 			{
 				database.AddTable(table);
 			}
-
+			EditorUtility.SetDirty(database);
+			AssetDatabase.SaveAssetIfDirty(database);
 			Debug.Log($"Auto-registered {tableAssets.Count} tables to the Database.");
 		}
 
