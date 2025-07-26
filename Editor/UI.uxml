@@ -1,0 +1,16 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:VisualElement style="flex-grow: 1; flex-basis: initial;">
+        <ui:Label tabindex="-1" text="GAME DATABASE" parse-escape-sequences="true" display-tooltip-when-elided="true" style="justify-content: center; align-items: auto; -unity-text-align: middle-center; font-size: 31px; background-color: rgb(46, 45, 45); margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0; height: 50px; color: rgb(106, 106, 106);" />
+        <ui:VisualElement name="Seperator" style="flex-grow: 1; height: 10px; align-items: flex-end; min-height: 10px; max-height: 10px; background-color: rgb(65, 65, 65);" />
+        <ui:VisualElement name="VisualElement" style="flex-grow: 1; flex-direction: row; height: 50px; flex-wrap: nowrap; align-items: center; background-color: rgb(43, 41, 41); min-height: 50px; max-height: 50px;">
+            <ui:Button text="Initialize" parse-escape-sequences="true" display-tooltip-when-elided="true" name="IntButton" style="background-color: rgb(75, 75, 75);" />
+            <ui:Button text="Table" parse-escape-sequences="true" display-tooltip-when-elided="true" name="TableButton" style="background-color: rgb(75, 75, 75);" />
+            <ui:Button text="Refresh" parse-escape-sequences="true" display-tooltip-when-elided="true" name="Refresh" style="background-color: rgb(75, 75, 75);" />
+        </ui:VisualElement>
+        <ui:VisualElement name="Seperator" style="flex-grow: 1; height: 10px; align-items: flex-end; min-height: 10px; max-height: 10px; background-color: rgb(65, 65, 65);" />
+        <ui:VisualElement name="Container" style="flex-grow: 1; background-color: rgb(42, 41, 41);">
+            <ui:ListView name="Tabs" />
+            <ui:VisualElement name="EditorView" style="flex-grow: 1;" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
