@@ -19,8 +19,8 @@ public class DatabaseEditor : EditorWindow
     private bool showTableControls = false;
 
     // UI Toolkit elements
-    private ListView tabsContainer;
-    private VisualElement editorView;
+    private VisualElement tabsContainer;
+    private ScrollView editorView;
     private VisualElement tableControlsContainer;
     private TextField tableNameField;
     private DropdownField tableTypeDropdown;
@@ -28,6 +28,9 @@ public class DatabaseEditor : EditorWindow
     private Button createTableClassButton;
 
     [MenuItem("Tools/THEBADDEST/Database/Database Editor")]
+#if UNITY_2021_2_OR_NEWER
+    [UnityEditor.ShortcutManagement.Shortcut("THEBADDEST/Database Editor", KeyCode.D, UnityEditor.ShortcutManagement.ShortcutModifiers.Action | UnityEditor.ShortcutManagement.ShortcutModifiers.Alt)]
+#endif
     public static void ShowWindow()
     {
         var window = GetWindow<DatabaseEditor>("Game Database");
@@ -51,8 +54,12 @@ public class DatabaseEditor : EditorWindow
         var initButton = root.Q<Button>("InitButton");
         var tableButton = root.Q<Button>("TableButton");
         var refreshButton = root.Q<Button>("Refresh");
-        tabsContainer = root.Q<ListView>("Tabs");
-        editorView = root.Q<VisualElement>("EditorView");
+        tabsContainer = root.Q<VisualElement>("Tabs");
+        if (tabsContainer != null)
+        {
+            tabsContainer.AddToClassList("tabs-container");
+        }
+        editorView = root.Q<ScrollView>("EditorView");
         // Initialize database
         OnEnable();
 
@@ -84,27 +91,20 @@ public class DatabaseEditor : EditorWindow
     {
         // Create a container for table creation controls
         tableControlsContainer = new VisualElement();
-        tableControlsContainer.style.display = DisplayStyle.None;
-        tableControlsContainer.style.marginTop = 8;
-        tableControlsContainer.style.marginBottom = 8;
-        tableControlsContainer.style.paddingTop = 8;
-        tableControlsContainer.style.paddingBottom = 8;
-        tableControlsContainer.style.borderTopWidth = 1;
-        tableControlsContainer.style.borderTopColor = new Color(0.3f, 0.3f, 0.3f, 1f);
+        tableControlsContainer.AddToClassList("table-controls-container");
+        tableControlsContainer.AddToClassList("hidden");
 
         // Table name field
         var nameContainer = new VisualElement();
-        nameContainer.style.flexDirection = FlexDirection.Row;
-        nameContainer.style.alignItems = Align.Center;
-        nameContainer.style.marginBottom = 4;
+        nameContainer.AddToClassList("name-container");
 
         var nameLabel = new Label("Table Name:");
-        nameLabel.style.width = 70;
+        nameLabel.AddToClassList("name-label");
         nameContainer.Add(nameLabel);
 
         tableNameField = new TextField();
         tableNameField.value = newTableName;
-        tableNameField.style.width = 180;
+        tableNameField.AddToClassList("name-field");
         tableNameField.RegisterValueChangedCallback(evt => newTableName = evt.newValue);
         nameContainer.Add(tableNameField);
 
@@ -114,7 +114,7 @@ public class DatabaseEditor : EditorWindow
             var typeNames = tableTypes.Select(t => t.Name).ToList();
             tableTypeDropdown = new DropdownField();
             tableTypeDropdown.choices = typeNames;
-            tableTypeDropdown.style.width = 180;
+            tableTypeDropdown.AddToClassList("type-dropdown");
             tableTypeDropdown.RegisterValueChangedCallback(evt =>
             {
                 selectedTypeIndex = typeNames.FindIndex(t => t == evt.newValue);
@@ -125,16 +125,14 @@ public class DatabaseEditor : EditorWindow
         // Create table button
         createTableButton = new Button(CreateAndAddTable);
         createTableButton.text = "Create and Add Table";
-        createTableButton.style.width = 180;
+        createTableButton.AddToClassList("create-button");
         nameContainer.Add(createTableButton);
 
         tableControlsContainer.Add(nameContainer);
 
         // Create table class button
         var classButtonContainer = new VisualElement();
-        classButtonContainer.style.flexDirection = FlexDirection.Row;
-        classButtonContainer.style.alignItems = Align.Center;
-        classButtonContainer.style.marginTop = 4;
+        classButtonContainer.AddToClassList("class-button-container");
 
         createTableClassButton = new Button(() =>
         {
@@ -142,7 +140,7 @@ public class DatabaseEditor : EditorWindow
             OnEnable();
         });
         createTableClassButton.text = "Create Table Class";
-        createTableClassButton.style.width = 150;
+        createTableClassButton.AddToClassList("create-class-button");
         classButtonContainer.Add(createTableClassButton);
 
         tableControlsContainer.Add(classButtonContainer);
@@ -170,9 +168,13 @@ public class DatabaseEditor : EditorWindow
     private void OnTableClicked()
     {
         showTableControls = !showTableControls;
-        if (tableControlsContainer != null)
+        var tableCreationContainer = rootVisualElement.Q<VisualElement>("TableCreationContainer");
+        if (tableCreationContainer != null)
         {
-            tableControlsContainer.style.display = showTableControls ? DisplayStyle.Flex : DisplayStyle.None;
+            if (showTableControls)
+                tableCreationContainer.RemoveFromClassList("hidden");
+            else
+                tableCreationContainer.AddToClassList("hidden");
         }
     }
 
@@ -188,6 +190,8 @@ public class DatabaseEditor : EditorWindow
     {
         if (tabsContainer == null) return;
 
+        tabsContainer.Clear();
+
         // Prepare the data source
         var tableList = new List<TableBase>();
         if (tablesProperty != null)
@@ -201,42 +205,38 @@ public class DatabaseEditor : EditorWindow
             }
         }
 
-        tabsContainer.itemsSource = tableList;
-
-        tabsContainer.makeItem = () =>
+        for (int i = 0; i < tableList.Count; i++)
         {
-            var container = new VisualElement();
-            container.style.flexDirection = FlexDirection.Row;
-            var btn = new Button();
-            btn.style.width = 110;
-            btn.style.height = 22;
-            btn.AddToClassList("tab-button");
-            var closeBtn = new Button();
-            closeBtn.text = "x";
-            closeBtn.style.width = 18;
-            closeBtn.style.height = 22;
-            closeBtn.AddToClassList("close-button");
-            container.Add(btn);
-            container.Add(closeBtn);
-            return container;
-        };
-
-        tabsContainer.bindItem = (element, i) =>
-        {
-            var container = (VisualElement)element;
-            var btn = (Button)container.ElementAt(0);
-            var closeBtn = (Button)container.ElementAt(1);
-            btn.text = tableList[i].GetTableName();
-            btn.clicked -= null;
-            closeBtn.clicked -= null;
+            // Create a new container similar to the template
+            var tabContainer = new VisualElement();
+            tabContainer.AddToClassList("tab-container");
+            
+            // Create tab button
+            var tabButton = new Button();
+            tabButton.name = "TabButton";
+            tabButton.AddToClassList("tab-button");
+            
+            // Create close button
+            var closeButton = new Button();
+            closeButton.name = "Crossbutton";
+            closeButton.text = "x";
+            closeButton.AddToClassList("close-button");
+            
+            // Add buttons to container
+            tabContainer.Add(tabButton);
+            tabContainer.Add(closeButton);
+            
+            tabButton.text = tableList[i].GetTableName();
+            
             int index = i;
-            btn.clicked += () =>
+            tabButton.clicked += () =>
             {
                 selectedTableIndex = index;
                 UpdateEditorView();
-                tabsContainer.selectedIndex = index;
+                UpdateTabSelection();
             };
-            closeBtn.clicked += () =>
+            
+            closeButton.clicked += () =>
             {
                 tablesProperty.DeleteArrayElementAtIndex(index);
                 if (selectedTableIndex >= index && selectedTableIndex > 0)
@@ -246,30 +246,31 @@ public class DatabaseEditor : EditorWindow
                 PopulateTabs();
                 UpdateEditorView();
             };
+            
             // Highlight selected
             if (index == selectedTableIndex)
-                btn.AddToClassList("tab-button-selected");
+                tabButton.AddToClassList("tab-button-selected");
             else
-                btn.RemoveFromClassList("tab-button-selected");
-        };
+                tabButton.RemoveFromClassList("tab-button-selected");
 
-        tabsContainer.selectionType = SelectionType.Single;
-        tabsContainer.selectedIndex = selectedTableIndex;
+            tabsContainer.Add(tabContainer);
+        }
     }
 
     private void UpdateTabSelection()
     {
-        var tabButtons = tabsContainer.Query<Button>().ToList();
-        for (int i = 0; i < tabButtons.Count; i++)
+        for (int i = 0; i < tabsContainer.childCount; i++)
         {
+            var container = tabsContainer[i] as VisualElement;
+            if (container == null) continue;
+            
+            var tabButton = container.Q<Button>("TabButton");
+            if (tabButton == null) continue;
+            
             if (i == selectedTableIndex)
-            {
-                tabButtons[i].AddToClassList("tab-button-selected");
-            }
+                tabButton.AddToClassList("tab-button-selected");
             else
-            {
-                tabButtons[i].RemoveFromClassList("tab-button-selected");
-            }
+                tabButton.RemoveFromClassList("tab-button-selected");
         }
     }
 
@@ -282,7 +283,7 @@ public class DatabaseEditor : EditorWindow
         if (database == null || serializedDatabase == null || tablesProperty == null)
         {
             var noDbLabel = new Label("No Database found. Click Initialize to create one.");
-            noDbLabel.style.color = Color.yellow;
+            noDbLabel.AddToClassList("no-db-label");
             editorView.Add(noDbLabel);
             return;
         }
@@ -290,7 +291,7 @@ public class DatabaseEditor : EditorWindow
         if (tablesProperty.arraySize == 0)
         {
             var noTablesLabel = new Label("No tables found. Create some tables to get started.");
-            noTablesLabel.style.color = Color.gray;
+            noTablesLabel.AddToClassList("no-tables-label");
             editorView.Add(noTablesLabel);
             return;
         }
@@ -305,23 +306,18 @@ public class DatabaseEditor : EditorWindow
         if (tableObj == null)
         {
             var invalidTableLabel = new Label("Invalid table selected.");
-            invalidTableLabel.style.color = Color.red;
+            invalidTableLabel.AddToClassList("invalid-table-label");
             editorView.Add(invalidTableLabel);
             return;
         }
 
         // Create a container for the table details
         var detailsContainer = new VisualElement();
-        detailsContainer.style.borderTopWidth = 1;
-        detailsContainer.style.borderTopColor = new Color(0.18f, 0.22f, 0.32f, 1f);
-        detailsContainer.style.paddingTop = 8;
+        detailsContainer.AddToClassList("details-container");
 
         // Title
         var titleLabel = new Label($"{tableObj.GetTableName()} Details");
-        titleLabel.style.fontSize = 16;
-        titleLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
-        titleLabel.style.color = new Color(0.18f, 0.22f, 0.32f, 1f);
-        titleLabel.style.marginBottom = 8;
+        titleLabel.AddToClassList("title-label");
         detailsContainer.Add(titleLabel);
 
         // Inspector
