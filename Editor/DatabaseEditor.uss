@@ -1,6 +1,42 @@
 .database-editor {
     background-color: rgb(51, 51, 51);
     color: rgb(255, 255, 255);
+    flex-grow: 1;
+}
+
+.main-title {
+    justify-content: center;
+    align-items: center;
+    -unity-text-align: middle-center;
+    font-size: 31px;
+    background-color: rgb(46, 45, 45);
+    height: 100px;
+    color: rgb(106, 106, 106);
+    margin: 0;
+    padding: 0;
+}
+
+.separator {
+    height: 5px;
+    min-height: 5px;
+    max-height: 10px;
+    background-color: rgb(65, 65, 65);
+    flex-grow: 1;
+}
+
+.button-container {
+    flex-direction: row;
+    height: 50px;
+    min-height: 50px;
+    max-height: 50px;
+    align-items: center;
+    background-color: rgb(43, 41, 41);
+    flex-wrap: nowrap;
+}
+
+.main-container {
+    flex-grow: 1;
+    background-color: rgb(42, 41, 41);
 }
 
 .tabs-container {
@@ -32,7 +68,15 @@
     justify-content: center;
 }
 
-.table-Container {
+.action-button:hover {
+    background-color: rgb(85, 85, 85);
+}
+
+.action-button:active {
+    background-color: rgb(65, 65, 65);
+}
+
+.table-Create-Container {
     background-color: rgb(75, 75, 75);
     color: rgb(255, 255, 255);
     border-width: 1px;
@@ -40,7 +84,7 @@
     font-size: 12px;
     padding: 8px 16px;
     margin: 0 4px;
-    min-width: 80px;
+    min-width: 20px;
     height: 32px;
     flex-shrink: 0;
     display: flex;
@@ -48,13 +92,19 @@
     justify-content: center;
     flex-direction: row;
     align-self: auto;
+    margin-right: 0;
+    margin-left: 0;
+    padding-right: 0;
+    padding-left: 0;
+    padding-top: 0;
+    padding-bottom: 0;
 }
 
-.tab-button {
+.tab-input {
     background-color: rgb(75, 75, 75);
     color: rgb(255, 255, 255);
     border-width: 0;
-    border-color: rgb(128, 128, 128);
+    border-radius: 0;
     font-size: 12px;
     padding: 8px 16px;
     margin: 0 4px;
@@ -64,59 +114,67 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    width: 120px;
 }
 
-.close-button {
+.tab-input:hover {
+    background-color: rgb(85, 85, 85);
+}
+
+.dropdown {
     background-color: rgb(75, 75, 75);
     color: rgb(255, 255, 255);
     border-width: 0;
-    border-color: rgb(128, 128, 128);
+    border-radius: 0;
     font-size: 12px;
     padding: 8px 16px;
     margin: 0 4px;
-    min-width: 80px;
+    min-width: 120px;
     height: 30px;
     flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
+    width: 120px;
+    max-width: 120px;
+    padding-top: 0;
+    padding-right: 0;
+    padding-bottom: 0;
+    padding-left: 0;
 }
 
-.action-button:hover {
+.dropdown:hover {
     background-color: rgb(85, 85, 85);
 }
 
-.tab-button:hover {
-    background-color: rgb(85, 85, 85);
+.create-table-button {
+    background-color: rgb(60, 120, 60);
+    color: rgb(255, 255, 255);
+    border-width: 1px;
+    border-color: rgb(128, 128, 128);
+    font-size: 12px;
+    padding: 6px 12px;
+    min-width: 120px;
+    height: 28px;
 }
 
-.close-button:hover {
-    background-color: rgb(100, 0, 0);
+.create-table-button:hover {
+    background-color: rgb(80, 140, 80);
 }
 
-.action-button:active {
-    background-color: rgb(65, 65, 65);
+.create-class-button {
+    background-color: rgb(60, 100, 120);
+    color: rgb(255, 255, 255);
+    border-width: 1px;
+    border-color: rgb(128, 128, 128);
+    font-size: 12px;
+    padding: 6px 12px;
+    min-width: 120px;
+    height: 28px;
 }
 
-.tab-button:active {
-    background-color: rgb(65, 65, 65);
-}
-
-.close-button:active {
-    background-color: rgb(65, 65, 65);
-}
-
-.close-button {
-    min-width: 32px;
-    max-width: 32px;
-    width: 32px;
-    padding: 0;
-    margin-left: 2px;
-}
-
-.tab-button-selected {
-    background-color: rgb(100, 100, 100);
-    border-color: rgb(150, 150, 150);
+.create-class-button:hover {
+    background-color: rgb(80, 120, 140);
 }
 
 .tab-container {
@@ -138,81 +196,98 @@
     justify-content: center;
 }
 
-.table-controls-container {
-    margin-top: 8px;
-    margin-bottom: 8px;
-    padding-top: 8px;
-    padding-bottom: 8px;
-    border-top-width: 1px;
-    border-top-color: rgb(77, 77, 77);
+.tab-button {
+    background-color: rgb(75, 75, 75);
+    color: rgb(255, 255, 255);
+    border-width: 0;
+    border-color: rgb(128, 128, 128);
+    font-size: 12px;
+    padding: 8px 16px;
+    margin: 0 4px;
+    min-width: 80px;
+    height: 30px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tab-button:hover {
+    background-color: rgb(85, 85, 85);
+}
+
+.tab-button:active {
+    background-color: rgb(65, 65, 65);
+}
+
+.tab-button-selected {
+    background-color: rgb(100, 100, 100);
+    border-color: rgb(150, 150, 150);
+}
+
+.close-button {
+    background-color: rgb(75, 75, 75);
+    color: rgb(255, 255, 255);
+    border-width: 0;
+    border-color: rgb(128, 128, 128);
+    font-size: 12px;
+    padding: 0;
+    margin-left: 2px;
+    min-width: 32px;
+    max-width: 32px;
+    width: 32px;
+    height: 30px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.close-button:hover {
+    background-color: rgb(100, 0, 0);
+}
+
+.close-button:active {
+    background-color: rgb(65, 65, 65);
 }
 
 .hidden {
     display: none;
 }
 
-.name-container {
-    flex-direction: row;
-    align-items: center;
-    margin-bottom: 4px;
-}
-
-.name-label {
-    width: 70px;
-    color: rgb(255, 255, 255);
-    font-size: 12px;
-}
-
-.name-field {
-    width: 180px;
-    margin-right: 8px;
-}
-
-.type-dropdown {
-    width: 180px;
-    margin-right: 8px;
-}
-
-.create-button {
-    width: 180px;
-    background-color: rgb(60, 120, 60);
-    color: rgb(255, 255, 255);
-}
-
-.create-button:hover {
-    background-color: rgb(80, 140, 80);
-}
-
-.class-button-container {
-    flex-direction: row;
-    align-items: center;
-    margin-top: 4px;
-}
-
-.create-class-button {
-    width: 150px;
-    background-color: rgb(60, 100, 120);
-    color: rgb(255, 255, 255);
-}
-
-.create-class-button:hover {
-    background-color: rgb(80, 120, 140);
-}
-
 .editor-view {
-    border-top-width: 1px;
-    border-top-color: rgb(46, 56, 82);
-    padding-top: 8px;
-    border-top-left-radius: 1px;
-    border-top-right-radius: 1px;
-    border-bottom-right-radius: 1px;
-    border-bottom-left-radius: 1px;
+    border-top-width: 0;
+    border-top-color: rgb(2, 2, 2);
+    padding-top: 0;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
+    border-right-width: 0;
+    border-bottom-width: 0;
+    border-left-width: 0;
+    padding-right: 0;
+    padding-bottom: 0;
+    padding-left: 0;
 }
 
 .details-container {
-    border-top-width: 1px;
-    border-top-color: rgb(46, 56, 82);
-    padding-top: 8px;
+    border-left-color: rgb(128, 128, 128);
+    border-right-color: rgb(128, 128, 128);
+    border-top-color: rgb(128, 128, 128);
+    border-bottom-color: rgb(128, 128, 128);
+    border-top-width: 0;
+    border-right-width: 0;
+    border-bottom-width: 0;
+    border-left-width: 0;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
+    margin-top: 10px;
+    margin-right: 10px;
+    margin-bottom: 10px;
+    margin-left: 10px;
 }
 
 .title-label {
@@ -220,29 +295,6 @@
     font-weight: bold;
     color: rgb(46, 56, 82);
     margin-bottom: 8px;
-}
-
-.inspector-container {
-    flex-grow: 1;
-    min-height: 200px;
-}
-
-.status-label {
-    color: rgb(255, 255, 0);
-    font-size: 14px;
-    margin: 8px;
-}
-
-.status-label-gray {
-    color: rgb(128, 128, 128);
-    font-size: 14px;
-    margin: 8px;
-}
-
-.status-label-red {
-    color: rgb(255, 100, 100);
-    font-size: 14px;
-    margin: 8px;
 }
 
 .no-db-label {
@@ -261,121 +313,4 @@
     color: rgb(255, 100, 100);
     font-size: 14px;
     margin: 8px;
-}
-
-.table-creation-container {
-    margin-top: 8px;
-    margin-bottom: 8px;
-    padding: 8px;
-    border-top-width: 1px;
-    border-top-color: rgb(77, 77, 77);
-    background-color: rgb(60, 60, 60);
-}
-
-.table-creation-row {
-    flex-direction: row;
-    align-items: center;
-    margin-bottom: 4px;
-}
-
-.table-name-label {
-    width: 80px;
-    color: rgb(255, 255, 255);
-    font-size: 12px;
-    margin-right: 8px;
-}
-
-.table-name-field {
-    width: 150px;
-    margin-right: 8px;
-    max-width: 150px;
-    min-width: 150px;
-    height: 32px;
-    min-height: 32px;
-    max-height: 32px;
-    align-items: center;
-    justify-content: center;
-    align-self: center;
-}
-
-.types-dropdown {
-    width: 150px;
-    margin-right: 8px;
-}
-
-.create-table-button {
-    background-color: rgb(60, 120, 60);
-    color: rgb(255, 255, 255);
-    border-width: 1px;
-    border-color: rgb(128, 128, 128);
-    font-size: 12px;
-    padding: 6px 12px;
-    min-width: 120px;
-    height: 28px;
-}
-
-.create-table-button:hover {
-    background-color: rgb(80, 140, 80);
-}
-
-.refresh-button {
-    background-color: rgb(120, 80, 60);
-    color: rgb(255, 255, 255);
-    border-width: 1px;
-    border-color: rgb(128, 128, 128);
-    font-size: 12px;
-    padding: 6px 12px;
-    min-width: 80px;
-    height: 28px;
-    margin-left: 8px;
-}
-
-.refresh-button:hover {
-    background-color: rgb(140, 100, 80);
-}
-
-.tab-input {
-    background-color: rgb(75, 75, 75);
-    color: rgb(255, 255, 255);
-    border-width: 0;
-    border-radius: 0;
-    font-size: 12px;
-    padding: 8px 16px;
-    margin: 0 4px;
-    min-width: 80px;
-    height: 32px;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 120px;
-}
-
-.tab-dropdown {
-    background-color: rgb(75, 75, 75);
-    color: rgb(255, 255, 255);
-    border-width: 0;
-    border-radius: 0;
-    font-size: 12px;
-    padding: 8px 16px;
-    margin: 0 4px;
-    min-width: 80px;
-    height: 32px;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 120px;
-}
-
-.tab-input:hover {
-    background-color: rgb(85, 85, 85);
-    margin-top: 4px;
-    margin-bottom: 2px;
-}
-
-.tab-dropdown:hover {
-    background-color: rgb(85, 85, 85);
-    margin-top: 4px;
-    margin-bottom: 2px;
 }

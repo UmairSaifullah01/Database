@@ -80,7 +80,7 @@ public class DatabaseEditor : EditorWindow
         }
 
         // Create table controls container
-        CreateTableControls(root);
+         CreateTableControls(root);
 
         // Initial population
         PopulateTabs();
@@ -90,71 +90,37 @@ public class DatabaseEditor : EditorWindow
     private void CreateTableControls(VisualElement root)
     {
         // Create a container for table creation controls
-        tableControlsContainer = new VisualElement();
-        tableControlsContainer.AddToClassList("table-controls-container");
-        tableControlsContainer.AddToClassList("hidden");
-
+        tableControlsContainer = rootVisualElement.Q<VisualElement>("TableCreationContainer");
+        
         // Table name field
-        var nameContainer = new VisualElement();
-        nameContainer.AddToClassList("name-container");
 
-        var nameLabel = new Label("Table Name:");
-        nameLabel.AddToClassList("name-label");
-        nameContainer.Add(nameLabel);
-
-        tableNameField = new TextField();
+        tableNameField = tableControlsContainer.Q<TextField>("TableTextField");
         tableNameField.value = newTableName;
-        tableNameField.AddToClassList("name-field");
         tableNameField.RegisterValueChangedCallback(evt => newTableName = evt.newValue);
-        nameContainer.Add(tableNameField);
 
         // Table type dropdown
         if (tableTypes != null && tableTypes.Length > 0)
         {
             var typeNames = tableTypes.Select(t => t.Name).ToList();
-            tableTypeDropdown = new DropdownField();
+            tableTypeDropdown = tableControlsContainer.Q<DropdownField>("TableTypeDropdown");
             tableTypeDropdown.choices = typeNames;
-            tableTypeDropdown.AddToClassList("type-dropdown");
             tableTypeDropdown.RegisterValueChangedCallback(evt =>
             {
                 selectedTypeIndex = typeNames.FindIndex(t => t == evt.newValue);
             });
-            nameContainer.Add(tableTypeDropdown);
         }
 
         // Create table button
-        createTableButton = new Button(CreateAndAddTable);
-        createTableButton.text = "Create and Add Table";
-        createTableButton.AddToClassList("create-button");
-        nameContainer.Add(createTableButton);
-
-        tableControlsContainer.Add(nameContainer);
+        createTableButton = tableControlsContainer.Q<Button>("CreateTable");
+        createTableButton.clicked += CreateAndAddTable;
 
         // Create table class button
-        var classButtonContainer = new VisualElement();
-        classButtonContainer.AddToClassList("class-button-container");
-
-        createTableClassButton = new Button(() =>
+        createTableClassButton = tableControlsContainer.Q<Button>("CreateTableClass");
+        createTableClassButton.clicked += () =>
         {
             DatabaseEditorUtility.CreateTableDriveClass();
             OnEnable();
-        });
-        createTableClassButton.text = "Create Table Class";
-        createTableClassButton.AddToClassList("create-class-button");
-        classButtonContainer.Add(createTableClassButton);
-
-        tableControlsContainer.Add(classButtonContainer);
-
-        // Add the container after the buttons
-        var buttonContainer = root.Q<VisualElement>();
-        if (buttonContainer != null)
-        {
-            buttonContainer.parent.Insert(buttonContainer.parent.IndexOf(buttonContainer) + 1, tableControlsContainer);
-        }
-        else
-        {
-            root.Insert(2, tableControlsContainer); // Insert after title and buttons
-        }
+        };
     }
 
     private void OnInitializeClicked()
@@ -314,12 +280,6 @@ public class DatabaseEditor : EditorWindow
         // Create a container for the table details
         var detailsContainer = new VisualElement();
         detailsContainer.AddToClassList("details-container");
-
-        // Title
-        var titleLabel = new Label($"{tableObj.GetTableName()} Details");
-        titleLabel.AddToClassList("title-label");
-        detailsContainer.Add(titleLabel);
-
         // Inspector
         var inspectorContainer = new IMGUIContainer(() =>
         {
