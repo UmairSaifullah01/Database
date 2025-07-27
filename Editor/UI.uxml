@@ -1,0 +1,24 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/Database/Editor/DatabaseEditor.uss?fileID=7433441132597879392&amp;guid=ecd889ccae0e6ba44aabe336b5124eee&amp;type=3#DatabaseEditor" />
+    <ui:VisualElement class="database-editor">
+        <ui:Label text="GAME DATABASE" class="main-title" />
+        <ui:VisualElement name="Seperator" class="separator" />
+        <ui:VisualElement class="button-container">
+            <ui:Button text="Initialize" name="InitButton" class="action-button" />
+            <ui:Button text="Table" name="TableButton" class="action-button" />
+            <ui:VisualElement name="TableCreationContainer" class="table-Create-Container hidden">
+                <ui:TextField value="NewTable" name="TableTextField" class="tab-input" />
+                <ui:DropdownField name="TableTypeDropdown" class="dropdown" />
+                <ui:Button text="Create and Add Table" name="CreateTable" class="create-table-button" />
+                <ui:Button text="Create Table Class" name="CreateTableClass" class="create-class-button" />
+            </ui:VisualElement>
+            <ui:Button text="Refresh" name="Refresh" class="action-button" />
+        </ui:VisualElement>
+        <ui:VisualElement name="Seperator" class="separator" />
+        <ui:VisualElement class="main-container">
+            <ui:VisualElement name="Tabs" class="tabs-container" />
+            <ui:VisualElement name="Seperator" class="separator" />
+            <ui:ScrollView name="EditorView" class="editor-view" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
