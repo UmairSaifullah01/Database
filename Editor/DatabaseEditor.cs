@@ -6,6 +6,30 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using THEBADDEST.DatabaseModule;
 
+public static class EditorAssetLoader
+{
+    public static VisualTreeAsset LoadUXML(string relativePath)
+    {
+        string packagePath = $"Packages/com.thebaddest.databasemodule/{relativePath}";
+        var asset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(packagePath);
+        if (asset != null)
+            return asset;
+        string assetsPath = $"Assets/Database/{relativePath}";
+        asset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(assetsPath);
+        return asset;
+    }
+    public static StyleSheet LoadUSS(string relativePath)
+    {
+        string packagePath = $"Packages/com.thebaddest.databasemodule/{relativePath}";
+        var asset = AssetDatabase.LoadAssetAtPath<StyleSheet>(packagePath);
+        if (asset != null)
+            return asset;
+        string assetsPath = $"Assets/Database/{relativePath}";
+        asset = AssetDatabase.LoadAssetAtPath<StyleSheet>(assetsPath);
+        return asset;
+    }
+}
+
 public class DatabaseEditor : EditorWindow
 {
     private Database database;
@@ -40,7 +64,7 @@ public class DatabaseEditor : EditorWindow
     public void CreateGUI()
     {
         // Load the UXML
-        var visualTree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Database/Editor/UI.uxml");
+        var visualTree = EditorAssetLoader.LoadUXML("Editor/UI.uxml");
         if (visualTree == null)
         {
             Debug.LogError("Could not load UI.uxml file. Make sure it exists at Assets/Database/Editor/UI.uxml");
@@ -80,18 +104,22 @@ public class DatabaseEditor : EditorWindow
         }
 
         // Create table controls container
-         CreateTableControls(root);
+        CreateTableControls(root);
 
         // Initial population
         PopulateTabs();
         UpdateEditorView();
+
+        var styleSheet = EditorAssetLoader.LoadUSS("Editor/DatabaseEditor.uss");
+        if (styleSheet != null)
+            rootVisualElement.styleSheets.Add(styleSheet);
     }
 
     private void CreateTableControls(VisualElement root)
     {
         // Create a container for table creation controls
         tableControlsContainer = rootVisualElement.Q<VisualElement>("TableCreationContainer");
-        
+
         // Table name field
 
         tableNameField = tableControlsContainer.Q<TextField>("TableTextField");
@@ -176,24 +204,24 @@ public class DatabaseEditor : EditorWindow
             // Create a new container similar to the template
             var tabContainer = new VisualElement();
             tabContainer.AddToClassList("tab-container");
-            
+
             // Create tab button
             var tabButton = new Button();
             tabButton.name = "TabButton";
             tabButton.AddToClassList("tab-button");
-            
+
             // Create close button
             var closeButton = new Button();
             closeButton.name = "Crossbutton";
             closeButton.text = "x";
             closeButton.AddToClassList("close-button");
-            
+
             // Add buttons to container
             tabContainer.Add(tabButton);
             tabContainer.Add(closeButton);
-            
+
             tabButton.text = tableList[i].GetTableName();
-            
+
             int index = i;
             tabButton.clicked += () =>
             {
@@ -201,7 +229,7 @@ public class DatabaseEditor : EditorWindow
                 UpdateEditorView();
                 UpdateTabSelection();
             };
-            
+
             closeButton.clicked += () =>
             {
                 tablesProperty.DeleteArrayElementAtIndex(index);
@@ -212,7 +240,7 @@ public class DatabaseEditor : EditorWindow
                 PopulateTabs();
                 UpdateEditorView();
             };
-            
+
             // Highlight selected
             if (index == selectedTableIndex)
                 tabButton.AddToClassList("tab-button-selected");
@@ -229,10 +257,10 @@ public class DatabaseEditor : EditorWindow
         {
             var container = tabsContainer[i] as VisualElement;
             if (container == null) continue;
-            
+
             var tabButton = container.Q<Button>("TabButton");
             if (tabButton == null) continue;
-            
+
             if (i == selectedTableIndex)
                 tabButton.AddToClassList("tab-button-selected");
             else
