@@ -1,24 +1,33 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <Style src="project://database/Assets/Database/Editor/DatabaseEditor.uss?fileID=7433441132597879392&amp;guid=ecd889ccae0e6ba44aabe336b5124eee&amp;type=3#DatabaseEditor" />
-    <ui:VisualElement class="database-editor">
-        <ui:Label text="GAME DATABASE" class="main-title" />
-        <ui:VisualElement name="Seperator" class="separator" />
-        <ui:VisualElement class="button-container">
-            <ui:Button text="Initialize" name="InitButton" class="action-button" />
-            <ui:Button text="Table" name="TableButton" class="action-button" />
-            <ui:VisualElement name="TableCreationContainer" class="table-Create-Container hidden">
-                <ui:TextField value="NewTable" name="TableTextField" class="tab-input" />
-                <ui:DropdownField name="TableTypeDropdown" class="dropdown" />
-                <ui:Button text="Create and Add Table" name="CreateTable" class="create-table-button" />
-                <ui:Button text="Create Table Class" name="CreateTableClass" class="create-class-button" />
-            </ui:VisualElement>
-            <ui:Button text="Refresh" name="Refresh" class="action-button" />
+    <ui:VisualElement name="windowMainVisualContainer" class="window-main-container">
+        <!-- Top Search Bar -->
+        <ui:VisualElement name="windowSearchBoxVisualContainer" class="window-search-box-container">
+            <ui:VisualElement name="searchIcon" class="search-icon" />
+            <ui:TextField name="searchBox" class="search-bar" />
         </ui:VisualElement>
-        <ui:VisualElement name="Seperator" class="separator" />
-        <ui:VisualElement class="main-container">
-            <ui:VisualElement name="Tabs" class="tabs-container" />
-            <ui:VisualElement name="Seperator" class="separator" />
-            <ui:ScrollView name="EditorView" class="editor-view" />
+        <!-- Splitter: Left (tables), Right (inspector) -->
+        <ui:VisualElement name="splitter" class="splitter">
+            <!-- Left: Table List Panel -->
+            <ui:VisualElement name="windowSelectionVisualContainer" class="window-selection-container">
+                <ui:Label text="Tables" class="panel-header" />
+                <ui:ScrollView name="tablesScrollView" class="tables-scroll-view">
+                    <ui:VisualElement name="tablesBox" class="tables-box">
+                        <!-- Example table item, to be populated dynamically -->
+                        <ui:VisualElement class="table-list-item" name="TableListItemExample">
+                            <ui:VisualElement class="table-icon" />
+                            <ui:Label text="Table Name" class="table-list-label" />
+                            <ui:Button class="table-remove-button" name="RemoveTableButtonExample" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:ScrollView>
+                <ui:Button text="Add Table" class="add-table-button" name="AddTableButton" />
+            </ui:VisualElement>
+            <!-- Right: Inspector/Details Panel -->
+            <ui:VisualElement name="windowDetailsVisualContainer" class="window-details-container">
+                <ui:Label text="Inspector" class="panel-header" />
+                <ui:VisualElement name="inspectorContent" class="inspector-content" />
+            </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>
