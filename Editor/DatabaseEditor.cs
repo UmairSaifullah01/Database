@@ -1,384 +1,145 @@
 using System;
 using System.Linq;
-using System.Collections.Generic;
+using THEBADDEST.EditorTools;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.UIElements;
-using THEBADDEST.DatabaseModule;
 
-public static class EditorAssetLoader
+
+namespace THEBADDEST.DatabaseModule
 {
-    public static VisualTreeAsset LoadUXML(string relativePath)
-    {
-        string packagePath = $"Packages/com.thebaddest.databasemodule/{relativePath}";
-        var asset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(packagePath);
-        if (asset != null)
-            return asset;
-        string assetsPath = $"Assets/Database/{relativePath}";
-        asset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(assetsPath);
-        return asset;
-    }
-    public static StyleSheet LoadUSS(string relativePath)
-    {
-        string packagePath = $"Packages/com.thebaddest.databasemodule/{relativePath}";
-        var asset = AssetDatabase.LoadAssetAtPath<StyleSheet>(packagePath);
-        if (asset != null)
-            return asset;
-        string assetsPath = $"Assets/Database/{relativePath}";
-        asset = AssetDatabase.LoadAssetAtPath<StyleSheet>(assetsPath);
-        return asset;
-    }
+
+
+	public class DatabaseEditor : EditorWindow
+	{
+		private Database database;
+		private Type[] tableTypes;
+		private SerializedObject serializedDatabase;
+		private SerializedProperty tablesProperty;
+		private int selectedIndex = 0;
+		Vector2 scrollVector;
+		Texture2D selectedColorTexture;
+		Texture2D normalColorTexture;
+		[MenuItem("Tools/THEBADDEST/Database/Database Editor %&d")]
+		public static void ShowWindow()
+		{
+			var window = GetWindow<DatabaseEditor>("Game Database");
+			window.Show();
+		}
+
+		void OnEnable()
+		{
+			string[] guids = AssetDatabase.FindAssets("t:Database");
+			if (guids.Length > 0)
+			{
+				string path = AssetDatabase.GUIDToAssetPath(guids[0]);
+				database = AssetDatabase.LoadAssetAtPath<Database>(path);
+				if (database != null)
+				{
+					serializedDatabase = new SerializedObject(database);
+					tablesProperty = serializedDatabase.FindProperty("tables");
+				}
+			}
+			else
+			{
+				database = null;
+			}
+			tableTypes = AppDomain.CurrentDomain.GetAssemblies()
+								  .SelectMany(assembly => assembly.GetTypes())
+								  .Where(type => type.IsClass && !type.IsAbstract && type.IsSubclassOf(typeof(TableBase)))
+								  .ToArray();
+			 // selectedColorTexture = EditorUtils.ColorToTexture2D(new Color(0f, 0f, 1f, 0.2f));
+			 selectedColorTexture = EditorUtils.ColorToTexture2D(new Color(1f, 1f, 1f, 0.2f));
+			 normalColorTexture = EditorUtils.ColorToTexture2D(new Color(0.1f, 0.1f, 0.1f, 0.2f));
+		}
+
+		void OnGUI()
+		{
+			DrawTitle();
+			GUILayout.BeginHorizontal();
+			GUILayout.BeginVertical(EditorUtils.Window,GUILayout.Width(150), GUILayout.ExpandHeight(true));
+			DrawLeftSide();
+			GUILayout.EndVertical();
+			GUILayout.BeginVertical(EditorUtils.Window);
+			DrawRightSide();
+			GUILayout.EndVertical();
+			GUILayout.EndHorizontal();
+	
+			
+		}
+		void DrawTitle()
+		{
+			EditorGUILayout.Space();
+			GUILayout.BeginVertical(EditorUtils.Window,GUILayout.ExpandWidth(true), GUILayout.Height(100));
+			EditorGUILayout.Space();
+			GUILayout.BeginHorizontal();
+			GUILayout.FlexibleSpace();
+			var titleStyle = new GUIStyle(GUI.skin.label)
+			{ 
+				fontSize = 28,
+				fontStyle = FontStyle.Bold,
+				alignment = TextAnchor.MiddleLeft,
+				normal = { textColor = new Color(0.7f, 0.7f, 0.7f) }
+			};
+			GUILayout.Label("Game Database", titleStyle, GUILayout.Height(50));
+			GUILayout.FlexibleSpace();
+			GUILayout.EndHorizontal();
+			EditorGUILayout.Space();
+			GUILayout.Label("Version 4.0b - Developed by Umair Saifullah", new GUIStyle() { alignment = TextAnchor.LowerRight, fontStyle = FontStyle.Italic, normal = { textColor = Color.gray } });
+			EditorGUILayout.Space();
+			GUILayout.EndVertical();
+			EditorGUILayout.Space(10);
+		}
+		void DrawLeftSide()
+		{
+
+			EditorUtils.DrawHeader("Table Names");
+			if (tablesProperty == null || tablesProperty.arraySize == 0)
+				return;
+			
+			var selectedStyle = new GUIStyle(GUI.skin.button) { 
+				normal =
+				{
+					background = normalColorTexture,
+				},
+				border = new RectOffset(-1, -1, -1, -1),
+				active = { background = selectedColorTexture, },
+			};
+			var pressedStyle = new GUIStyle(GUI.skin.button) { 
+				normal =
+				{
+					background = selectedColorTexture,
+				},
+				border = new RectOffset(-1, -1, -1, -1),
+			};
+			for (int i = 0; i < tablesProperty.arraySize; i++)
+			{
+				var tableProp = tablesProperty.GetArrayElementAtIndex(i);
+				var tableObj = tableProp.objectReferenceValue as TableBase;
+				if (tableObj == null) continue;
+				if (GUILayout.Button(tableObj.name,selectedIndex==i?pressedStyle:selectedStyle,GUILayout.Height(30)))
+				{
+					selectedIndex = i;
+				}
+			}
+		}
+		
+		void DrawRightSide()
+		{
+			EditorUtils.DrawHeader("Table details");
+			if (tablesProperty == null || tablesProperty.arraySize == 0)
+				return;
+			var tableProp = tablesProperty.GetArrayElementAtIndex(selectedIndex);
+			var tableObj = tableProp.objectReferenceValue as TableBase;
+			if (tableObj == null) return;
+			Editor editor = Editor.CreateEditor(tableObj);
+			if (editor != null)
+			{
+				scrollVector=EditorGUILayout.BeginScrollView(scrollVector);
+				editor.OnInspectorGUI();
+				EditorGUILayout.EndScrollView();
+			}
+		}
+	}
+	
 }
 
-public class DatabaseEditor : EditorWindow
-{
-    private Database database;
-    private SerializedObject serializedDatabase;
-    private SerializedProperty tablesProperty;
-    private int selectedTableIndex = 0;
-
-    private Type[] tableTypes;
-    private int selectedTypeIndex;
-    private string newTableName = "NewTable";
-    private bool showTableControls = false;
-
-    // UI Toolkit elements
-    private VisualElement tabsContainer;
-    private ScrollView editorView;
-    private VisualElement tableControlsContainer;
-    private TextField tableNameField;
-    private DropdownField tableTypeDropdown;
-    private Button createTableButton;
-    private Button createTableClassButton;
-
-    [MenuItem("Tools/THEBADDEST/Database/Database Editor")]
-#if UNITY_2021_2_OR_NEWER
-    [UnityEditor.ShortcutManagement.Shortcut("THEBADDEST/Database Editor", KeyCode.D, UnityEditor.ShortcutManagement.ShortcutModifiers.Action | UnityEditor.ShortcutManagement.ShortcutModifiers.Alt)]
-#endif
-    public static void ShowWindow()
-    {
-        var window = GetWindow<DatabaseEditor>("Game Database");
-        window.Show();
-    }
-
-    public void CreateGUI()
-    {
-        // Load the UXML
-        var visualTree = EditorAssetLoader.LoadUXML("Editor/UI.uxml");
-        if (visualTree == null)
-        {
-            Debug.LogError("Could not load UI.uxml file. Make sure it exists at Assets/Database/Editor/UI.uxml");
-            return;
-        }
-
-        VisualElement root = visualTree.CloneTree();
-        rootVisualElement.Add(root);
-
-        // Query UI elements
-        var initButton = root.Q<Button>("InitButton");
-        var tableButton = root.Q<Button>("TableButton");
-        var refreshButton = root.Q<Button>("Refresh");
-        tabsContainer = root.Q<VisualElement>("Tabs");
-        if (tabsContainer != null)
-        {
-            tabsContainer.AddToClassList("tabs-container");
-        }
-        editorView = root.Q<ScrollView>("EditorView");
-        // Initialize database
-        OnEnable();
-
-        // Wire up button callbacks
-        if (initButton != null)
-        {
-            initButton.clicked += OnInitializeClicked;
-        }
-
-        if (tableButton != null)
-        {
-            tableButton.clicked += OnTableClicked;
-        }
-
-        if (refreshButton != null)
-        {
-            refreshButton.clicked += OnRefreshClicked;
-        }
-
-        // Create table controls container
-        CreateTableControls(root);
-
-        // Initial population
-        PopulateTabs();
-        UpdateEditorView();
-
-        var styleSheet = EditorAssetLoader.LoadUSS("Editor/DatabaseEditor.uss");
-        if (styleSheet != null)
-            rootVisualElement.styleSheets.Add(styleSheet);
-    }
-
-    private void CreateTableControls(VisualElement root)
-    {
-        // Create a container for table creation controls
-        tableControlsContainer = rootVisualElement.Q<VisualElement>("TableCreationContainer");
-
-        // Table name field
-
-        tableNameField = tableControlsContainer.Q<TextField>("TableTextField");
-        tableNameField.value = newTableName;
-        tableNameField.RegisterValueChangedCallback(evt => newTableName = evt.newValue);
-
-        // Table type dropdown
-        if (tableTypes != null && tableTypes.Length > 0)
-        {
-            var typeNames = tableTypes.Select(t => t.Name).ToList();
-            tableTypeDropdown = tableControlsContainer.Q<DropdownField>("TableTypeDropdown");
-            tableTypeDropdown.choices = typeNames;
-            tableTypeDropdown.RegisterValueChangedCallback(evt =>
-            {
-                selectedTypeIndex = typeNames.FindIndex(t => t == evt.newValue);
-            });
-        }
-
-        // Create table button
-        createTableButton = tableControlsContainer.Q<Button>("CreateTable");
-        createTableButton.clicked += CreateAndAddTable;
-
-        // Create table class button
-        createTableClassButton = tableControlsContainer.Q<Button>("CreateTableClass");
-        createTableClassButton.clicked += () =>
-        {
-            DatabaseEditorUtility.CreateTableDriveClass();
-            OnEnable();
-        };
-    }
-
-    private void OnInitializeClicked()
-    {
-        DatabaseEditorUtility.InitializeDatabase();
-        OnEnable();
-        PopulateTabs();
-        UpdateEditorView();
-    }
-
-    private void OnTableClicked()
-    {
-        showTableControls = !showTableControls;
-        var tableCreationContainer = rootVisualElement.Q<VisualElement>("TableCreationContainer");
-        if (tableCreationContainer != null)
-        {
-            if (showTableControls)
-                tableCreationContainer.RemoveFromClassList("hidden");
-            else
-                tableCreationContainer.AddToClassList("hidden");
-        }
-    }
-
-    private void OnRefreshClicked()
-    {
-        DatabaseEditorUtility.AutoRegisterTables();
-        OnEnable();
-        PopulateTabs();
-        UpdateEditorView();
-    }
-
-    private void PopulateTabs()
-    {
-        if (tabsContainer == null) return;
-
-        tabsContainer.Clear();
-
-        // Prepare the data source
-        var tableList = new List<TableBase>();
-        if (tablesProperty != null)
-        {
-            for (int i = 0; i < tablesProperty.arraySize; i++)
-            {
-                var tableProp = tablesProperty.GetArrayElementAtIndex(i);
-                var tableObj = tableProp.objectReferenceValue as TableBase;
-                if (tableObj != null)
-                    tableList.Add(tableObj);
-            }
-        }
-
-        for (int i = 0; i < tableList.Count; i++)
-        {
-            // Create a new container similar to the template
-            var tabContainer = new VisualElement();
-            tabContainer.AddToClassList("tab-container");
-
-            // Create tab button
-            var tabButton = new Button();
-            tabButton.name = "TabButton";
-            tabButton.AddToClassList("tab-button");
-
-            // Create close button
-            var closeButton = new Button();
-            closeButton.name = "Crossbutton";
-            closeButton.text = "x";
-            closeButton.AddToClassList("close-button");
-
-            // Add buttons to container
-            tabContainer.Add(tabButton);
-            tabContainer.Add(closeButton);
-
-            tabButton.text = tableList[i].GetTableName();
-
-            int index = i;
-            tabButton.clicked += () =>
-            {
-                selectedTableIndex = index;
-                UpdateEditorView();
-                UpdateTabSelection();
-            };
-
-            closeButton.clicked += () =>
-            {
-                tablesProperty.DeleteArrayElementAtIndex(index);
-                if (selectedTableIndex >= index && selectedTableIndex > 0)
-                    selectedTableIndex--;
-                serializedDatabase.ApplyModifiedProperties();
-                EditorUtility.SetDirty(database);
-                PopulateTabs();
-                UpdateEditorView();
-            };
-
-            // Highlight selected
-            if (index == selectedTableIndex)
-                tabButton.AddToClassList("tab-button-selected");
-            else
-                tabButton.RemoveFromClassList("tab-button-selected");
-
-            tabsContainer.Add(tabContainer);
-        }
-    }
-
-    private void UpdateTabSelection()
-    {
-        for (int i = 0; i < tabsContainer.childCount; i++)
-        {
-            var container = tabsContainer[i] as VisualElement;
-            if (container == null) continue;
-
-            var tabButton = container.Q<Button>("TabButton");
-            if (tabButton == null) continue;
-
-            if (i == selectedTableIndex)
-                tabButton.AddToClassList("tab-button-selected");
-            else
-                tabButton.RemoveFromClassList("tab-button-selected");
-        }
-    }
-
-    private void UpdateEditorView()
-    {
-        if (editorView == null) return;
-
-        editorView.Clear();
-
-        if (database == null || serializedDatabase == null || tablesProperty == null)
-        {
-            var noDbLabel = new Label("No Database found. Click Initialize to create one.");
-            noDbLabel.AddToClassList("no-db-label");
-            editorView.Add(noDbLabel);
-            return;
-        }
-
-        if (tablesProperty.arraySize == 0)
-        {
-            var noTablesLabel = new Label("No tables found. Create some tables to get started.");
-            noTablesLabel.AddToClassList("no-tables-label");
-            editorView.Add(noTablesLabel);
-            return;
-        }
-
-        if (selectedTableIndex >= tablesProperty.arraySize)
-        {
-            selectedTableIndex = 0;
-        }
-
-        var tableProp = tablesProperty.GetArrayElementAtIndex(selectedTableIndex);
-        var tableObj = tableProp.objectReferenceValue as TableBase;
-        if (tableObj == null)
-        {
-            var invalidTableLabel = new Label("Invalid table selected.");
-            invalidTableLabel.AddToClassList("invalid-table-label");
-            editorView.Add(invalidTableLabel);
-            return;
-        }
-
-        // Create a container for the table details
-        var detailsContainer = new VisualElement();
-        detailsContainer.AddToClassList("details-container");
-        // Inspector
-        var inspectorContainer = new IMGUIContainer(() =>
-        {
-            Editor editor = Editor.CreateEditor(tableObj);
-            if (editor != null)
-            {
-                editor.OnInspectorGUI();
-            }
-        });
-        inspectorContainer.style.flexGrow = 1;
-        inspectorContainer.style.minHeight = 200;
-        detailsContainer.Add(inspectorContainer);
-
-        editorView.Add(detailsContainer);
-    }
-
-    private void OnEnable()
-    {
-        string[] guids = AssetDatabase.FindAssets("t:Database");
-        if (guids.Length > 0)
-        {
-            string path = AssetDatabase.GUIDToAssetPath(guids[0]);
-            database = AssetDatabase.LoadAssetAtPath<Database>(path);
-            if (database != null)
-            {
-                serializedDatabase = new SerializedObject(database);
-                tablesProperty = serializedDatabase.FindProperty("tables");
-            }
-        }
-        else
-        {
-            database = null;
-        }
-
-        tableTypes = AppDomain.CurrentDomain.GetAssemblies()
-            .SelectMany(assembly => assembly.GetTypes())
-            .Where(type => type.IsClass && !type.IsAbstract && type.IsSubclassOf(typeof(TableBase)))
-            .ToArray();
-    }
-
-    private void CreateAndAddTable()
-    {
-        if (string.IsNullOrWhiteSpace(newTableName))
-        {
-            Debug.LogError("Table name cannot be empty.");
-            return;
-        }
-
-        if (tableTypes == null || tableTypes.Length == 0)
-        {
-            Debug.LogError("No table types found.");
-            return;
-        }
-
-        var tableType = tableTypes[selectedTypeIndex];
-        var asset = ScriptableObject.CreateInstance(tableType);
-        asset.name = newTableName;
-        string dbPath = AssetDatabase.GetAssetPath(database);
-        string folder = System.IO.Path.GetDirectoryName(dbPath);
-        string assetPath = AssetDatabase.GenerateUniqueAssetPath($"{folder}/{newTableName}.asset");
-        AssetDatabase.CreateAsset(asset, assetPath);
-        AssetDatabase.SaveAssets();
-        tablesProperty.arraySize++;
-        tablesProperty.GetArrayElementAtIndex(tablesProperty.arraySize - 1).objectReferenceValue = asset;
-        serializedDatabase.ApplyModifiedProperties();
-        EditorUtility.SetDirty(database);
-        selectedTableIndex = tablesProperty.arraySize - 1;
-        Debug.Log($"Created and added table '{newTableName}' to the Database.");
-
-        // Update UI
-        PopulateTabs();
-        UpdateEditorView();
-    }
-}
