@@ -45,6 +45,5 @@ namespace THEBADDEST
 		{
 			_services.Clear();
 		}
-
 	}
 }

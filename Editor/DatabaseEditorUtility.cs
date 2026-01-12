@@ -9,6 +9,7 @@ namespace THEBADDEST.DatabaseModule
 
 	public static class DatabaseEditorUtility
 	{
+		private const string DatabaseName = "GameDatabase";
 		private const string DefaultDatabasePath   = "Assets/Resources/GameDatabase.asset";
 		private const string ResourcesDatabasePath = "GameDatabase";
 		[MenuItem("Tools/THEBADDEST/Database/Initialize Database")]
@@ -113,27 +114,72 @@ public class {className} : TableBase
 }}";
 		}
 
-		private static Database FindOrCreateDatabase()
+		public static Database FindOrCreateDatabase()
 		{
-			var database = AssetDatabase.FindAssets("t:RefinedDatabase")
+			// First try to find by exact path
+			var database = AssetDatabase.LoadAssetAtPath<Database>(DefaultDatabasePath);
+			if (database != null)
+				return database;
+			
+			// Try to find by name "GameDatabase" in all Database assets
+			var databaseByName = AssetDatabase.FindAssets("t:Database")
+				.Select(AssetDatabase.GUIDToAssetPath)
+				.Where(path => Path.GetFileNameWithoutExtension(path) == DatabaseName)
+				.Select(AssetDatabase.LoadAssetAtPath<Database>)
+				.FirstOrDefault();
+			
+			if (databaseByName != null)
+				return databaseByName;
+			
+			// If not found by name, try to find any Database asset
+			var anyDatabase = AssetDatabase.FindAssets("t:Database")
 				.Select(AssetDatabase.GUIDToAssetPath)
 				.Select(AssetDatabase.LoadAssetAtPath<Database>)
 				.FirstOrDefault();
 			
-			if (database == null)
+			if (anyDatabase != null)
+				return anyDatabase;
+			
+			// If still not found, create a new one
+			var databasePath = Path.GetDirectoryName(DefaultDatabasePath);
+			if (!Directory.Exists(databasePath))
 			{
-				var databasePath = Path.GetDirectoryName("Assets/Resources/");
-				if (!Directory.Exists(databasePath))
-				{
-					Directory.CreateDirectory(databasePath);
-				}
-				database = ScriptableObject.CreateInstance<Database>();
-				AssetDatabase.CreateAsset(database, DefaultDatabasePath);
-				AssetDatabase.SaveAssets();
-				Debug.Log($"Created a new database at '{DefaultDatabasePath}'.");
+				Directory.CreateDirectory(databasePath);
 			}
+			var newDatabase = ScriptableObject.CreateInstance<Database>();
+			newDatabase.name = DatabaseName;
+			AssetDatabase.CreateAsset(newDatabase, DefaultDatabasePath);
+			AssetDatabase.SaveAssets();
+			Debug.Log($"Created a new database '{DatabaseName}' at '{DefaultDatabasePath}'.");
+			
+			return newDatabase;
+		}
+		
+		public static void RefreshDatabaseTables(Database database)
+		{
+			if (database == null) return;
+			
+			var tableAssets = AssetDatabase.FindAssets("t:ScriptableObject")
+				.Select(AssetDatabase.GUIDToAssetPath)
+				.Select(AssetDatabase.LoadAssetAtPath<ScriptableObject>)
+				.Where(table => table is TableBase)
+				.Cast<TableBase>()
+				.ToList();
 
-			return database;
+			// Clear existing tables and re-add all found tables
+			var serializedObject = new SerializedObject(database);
+			var tablesProperty = serializedObject.FindProperty("tables");
+			tablesProperty.ClearArray();
+			
+			foreach (var table in tableAssets)
+			{
+				tablesProperty.arraySize++;
+				tablesProperty.GetArrayElementAtIndex(tablesProperty.arraySize - 1).objectReferenceValue = table;
+			}
+			
+			serializedObject.ApplyModifiedProperties();
+			EditorUtility.SetDirty(database);
+			AssetDatabase.SaveAssetIfDirty(database);
 		}
 	}
 
