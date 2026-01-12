@@ -1,10 +1,27 @@
-# Database Package Documentation v1.2
+# Database
 
 ## Overview
 
 The Database Package is a flexible and extensible framework for managing data within Unity. It provides a set of classes and interfaces that allow you to create and manage databases, tables, and data with enterprise-level features like indexing, querying, and sorting.
 
-## ✨ New Features in v1.2
+## ✨ New Features in v2.0
+
+### 🚀 Service Locator Extensions
+
+- **Unity Object Extensions**: Easy service access from any Unity object
+  - `this.GetService<T>()` - Get any registered service
+  - `this.RegisterService<T>(service)` - Register a service
+  - `this.UnregisterService<T>()` - Unregister a service
+- **Global Service Locator**: Simplified to global-only pattern for easier usage
+- **Clean API**: Removed category system for straightforward service management
+
+### 🛠️ Enhanced Database Editor
+
+- **Optimized Performance**: Dictionary-based editor caching and TypeCache integration
+- **Auto-Refresh**: Automatic table discovery and registration on window open
+- **GameDatabase**: Consistent "GameDatabase" naming and management
+
+## ✨ Features from v1.2
 
 ### 🚀 Enhanced Table System
 
@@ -105,6 +122,14 @@ Global service locator with convenient access methods:
 - `GetTable(string)` - Access by name
 - `InitializeDatabase()` - Manual initialization
 
+#### ObjectServiceExtensions.cs
+
+Extension methods for `UnityEngine.Object` to easily access services:
+
+- `GetService<T>()` - Get any registered service
+- `RegisterService<T>(service)` - Register a service
+- `UnregisterService<T>()` - Unregister a service
+
 ### 🎨 Editor Files
 
 #### DatabaseEditor.cs
@@ -181,6 +206,9 @@ public class PlayerTable : Table<PlayerData>
 // Shortest way to get a table
 var playerTable = Database.Get<PlayerTable>();
 
+// Or using extension methods (v2.0)
+var playerTable = this.GetService<PlayerTable>();
+
 // Add data
 playerTable.AddRecord(new PlayerData { playerName = "Alice", score = 100 });
 
@@ -192,6 +220,19 @@ var alice = playerTable.FirstOrDefault(p => p.playerName == "Alice");
 // Bulk operations
 playerTable.AddRange(newPlayers);
 playerTable.RemoveAll(p => !p.isActive);
+```
+
+### 4. Using Service Locator (v2.0)
+
+```csharp
+// Register a service
+this.RegisterService<MyService>(myService);
+
+// Get a service
+var myService = this.GetService<MyService>();
+
+// Unregister a service
+this.UnregisterService<MyService>();
 ```
 
 ## 📊 Advanced Usage

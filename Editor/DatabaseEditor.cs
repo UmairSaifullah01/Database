@@ -96,7 +96,7 @@ namespace THEBADDEST.DatabaseModule
 			GUILayout.FlexibleSpace();
 			GUILayout.EndHorizontal();
 			EditorGUILayout.Space();
-			GUILayout.Label("Version 4.0b - Developed by Umair Saifullah", new GUIStyle() { alignment = TextAnchor.LowerRight, fontStyle = FontStyle.Italic, normal = { textColor = Color.gray } });
+			GUILayout.Label("Version 2.0 - Developed by Umair Saifullah", new GUIStyle() { alignment = TextAnchor.LowerRight, fontStyle = FontStyle.Italic, normal = { textColor = Color.gray } });
 			EditorGUILayout.Space();
 			GUILayout.EndVertical();
 			EditorGUILayout.Space(10);
