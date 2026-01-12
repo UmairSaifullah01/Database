@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using THEBADDEST.EditorTools;
 using UnityEditor;
@@ -19,6 +20,7 @@ namespace THEBADDEST.DatabaseModule
 		Vector2 scrollVector;
 		Texture2D selectedColorTexture;
 		Texture2D normalColorTexture;
+		private Dictionary<TableBase, Editor> tableEditors = new Dictionary<TableBase, Editor>();
 		[MenuItem("Tools/THEBADDEST/Database/Database Editor %&d")]
 		public static void ShowWindow()
 		{
@@ -28,53 +30,63 @@ namespace THEBADDEST.DatabaseModule
 
 		void OnEnable()
 		{
-			string[] guids = AssetDatabase.FindAssets("t:Database");
-			if (guids.Length > 0)
+			// Find or create the GameDatabase
+			database = DatabaseEditorUtility.FindOrCreateDatabase();
+
+			if (database != null)
 			{
-				string path = AssetDatabase.GUIDToAssetPath(guids[0]);
-				database = AssetDatabase.LoadAssetAtPath<Database>(path);
-				if (database != null)
-				{
-					serializedDatabase = new SerializedObject(database);
-					tablesProperty = serializedDatabase.FindProperty("tables");
-				}
+				// Refresh database tables
+				DatabaseEditorUtility.RefreshDatabaseTables(database);
+
+				serializedDatabase = new SerializedObject(database);
+				tablesProperty = serializedDatabase.FindProperty("tables");
 			}
-			else
-			{
-				database = null;
-			}
-			tableTypes = AppDomain.CurrentDomain.GetAssemblies()
-								  .SelectMany(assembly => assembly.GetTypes())
-								  .Where(type => type.IsClass && !type.IsAbstract && type.IsSubclassOf(typeof(TableBase)))
+
+			// Use Unity's TypeCache for optimized type discovery (cached, only updates on assembly changes)
+			tableTypes = TypeCache.GetTypesDerivedFrom<TableBase>()
+								  .Where(type => type.IsClass && !type.IsAbstract)
 								  .ToArray();
-			 // selectedColorTexture = EditorUtils.ColorToTexture2D(new Color(0f, 0f, 1f, 0.2f));
-			 selectedColorTexture = EditorUtils.ColorToTexture2D(new Color(1f, 1f, 1f, 0.2f));
-			 normalColorTexture = EditorUtils.ColorToTexture2D(new Color(0.1f, 0.1f, 0.1f, 0.2f));
+			// selectedColorTexture = EditorUtils.ColorToTexture2D(new Color(0f, 0f, 1f, 0.2f));
+			selectedColorTexture = EditorUtils.ColorToTexture2D(new Color(1f, 1f, 1f, 0.2f));
+			normalColorTexture = EditorUtils.ColorToTexture2D(new Color(0.1f, 0.1f, 0.1f, 0.2f));
+		}
+
+		void OnDisable()
+		{
+			tableEditors.Clear();
 		}
 
 		void OnGUI()
 		{
+			if (serializedDatabase != null)
+			{
+				serializedDatabase.Update();
+			}
+
 			DrawTitle();
 			GUILayout.BeginHorizontal();
-			GUILayout.BeginVertical(EditorUtils.Window,GUILayout.Width(150), GUILayout.ExpandHeight(true));
+			GUILayout.BeginVertical(EditorUtils.Window, GUILayout.Width(150), GUILayout.ExpandHeight(true));
 			DrawLeftSide();
 			GUILayout.EndVertical();
 			GUILayout.BeginVertical(EditorUtils.Window);
 			DrawRightSide();
 			GUILayout.EndVertical();
 			GUILayout.EndHorizontal();
-	
-			
+
+			if (serializedDatabase != null)
+			{
+				serializedDatabase.ApplyModifiedProperties();
+			}
 		}
 		void DrawTitle()
 		{
 			EditorGUILayout.Space();
-			GUILayout.BeginVertical(EditorUtils.Window,GUILayout.ExpandWidth(true), GUILayout.Height(100));
+			GUILayout.BeginVertical(EditorUtils.Window, GUILayout.ExpandWidth(true), GUILayout.Height(100));
 			EditorGUILayout.Space();
 			GUILayout.BeginHorizontal();
 			GUILayout.FlexibleSpace();
 			var titleStyle = new GUIStyle(GUI.skin.label)
-			{ 
+			{
 				fontSize = 28,
 				fontStyle = FontStyle.Bold,
 				alignment = TextAnchor.MiddleLeft,
@@ -95,8 +107,9 @@ namespace THEBADDEST.DatabaseModule
 			EditorUtils.DrawHeader("Table Names");
 			if (tablesProperty == null || tablesProperty.arraySize == 0)
 				return;
-			
-			var selectedStyle = new GUIStyle(GUI.skin.button) { 
+
+			var selectedStyle = new GUIStyle(GUI.skin.button)
+			{
 				normal =
 				{
 					background = normalColorTexture,
@@ -104,7 +117,8 @@ namespace THEBADDEST.DatabaseModule
 				border = new RectOffset(-1, -1, -1, -1),
 				active = { background = selectedColorTexture, },
 			};
-			var pressedStyle = new GUIStyle(GUI.skin.button) { 
+			var pressedStyle = new GUIStyle(GUI.skin.button)
+			{
 				normal =
 				{
 					background = selectedColorTexture,
@@ -116,13 +130,13 @@ namespace THEBADDEST.DatabaseModule
 				var tableProp = tablesProperty.GetArrayElementAtIndex(i);
 				var tableObj = tableProp.objectReferenceValue as TableBase;
 				if (tableObj == null) continue;
-				if (GUILayout.Button(tableObj.name,selectedIndex==i?pressedStyle:selectedStyle,GUILayout.Height(30)))
+				if (GUILayout.Button(tableObj.name, selectedIndex == i ? pressedStyle : selectedStyle, GUILayout.Height(30)))
 				{
 					selectedIndex = i;
 				}
 			}
 		}
-		
+
 		void DrawRightSide()
 		{
 			EditorUtils.DrawHeader("Table details");
@@ -131,15 +145,22 @@ namespace THEBADDEST.DatabaseModule
 			var tableProp = tablesProperty.GetArrayElementAtIndex(selectedIndex);
 			var tableObj = tableProp.objectReferenceValue as TableBase;
 			if (tableObj == null) return;
-			Editor editor = Editor.CreateEditor(tableObj);
+
+			// Check if editor exists in dictionary, otherwise create and add it
+			if (!tableEditors.TryGetValue(tableObj, out Editor editor))
+			{
+				editor = Editor.CreateEditor(tableObj);
+				tableEditors[tableObj] = editor;
+			}
+
 			if (editor != null)
 			{
-				scrollVector=EditorGUILayout.BeginScrollView(scrollVector);
+				scrollVector = EditorGUILayout.BeginScrollView(scrollVector);
 				editor.OnInspectorGUI();
 				EditorGUILayout.EndScrollView();
 			}
 		}
 	}
-	
+
 }
 
