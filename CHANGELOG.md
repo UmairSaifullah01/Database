@@ -2,6 +2,43 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.0] - 2024-12-XX
+
+### 🚀 Added - Service Locator Enhancements
+
+- **Global Service Locator**: Simplified to global-only service locator pattern
+- **Unity Object Extensions**: New extension methods for `UnityEngine.Object`:
+  - `GetService<T>(bool global = true)` - Easy service access from any Unity object
+  - `RegisterService<T>(T service, bool global = true)` - Simple service registration
+  - `UnregisterService<T>(bool global = true)` - Service unregistration
+- **Simplified API**: Removed category system for cleaner, more straightforward usage
+
+### 🛠️ Improved - Database Editor
+
+- **Optimized Editor Caching**: Dictionary-based editor caching system for better performance
+- **TypeCache Integration**: Replaced expensive `AppDomain` scanning with Unity's optimized `TypeCache`
+- **Auto-Refresh Tables**: Automatic table refresh when Database Editor window opens
+- **GameDatabase Naming**: Consistent "GameDatabase" naming throughout the system
+- **Better Editor Management**: Improved editor lifecycle management without unnecessary destruction
+
+### 🔧 Improved - Database Utilities
+
+- **FindOrCreateDatabase**: Enhanced database discovery with multiple fallback strategies
+- **RefreshDatabaseTables**: New utility method to automatically refresh and register all TableBase assets
+- **Better Path Management**: Improved database path resolution and creation
+
+### 📚 Improved - Code Quality
+
+- **Performance Optimizations**: Reduced overhead in editor operations
+- **Cleaner Code**: Removed unnecessary destruction logic
+- **Better Resource Management**: Improved memory management for editor windows
+
+### 🔄 Migration Notes
+
+- **Service Locator**: Extension methods provide easier access - `this.GetService<T>()` instead of `ServiceLocator.Global.GetService<T>()`
+- **Database Editor**: No breaking changes, but improved performance and auto-refresh functionality
+- **Backward Compatible**: All existing code continues to work without changes
+
 ## [1.2.0] - 2024-01-XX
 
 ### 🚀 Added - Enhanced Table System
@@ -96,6 +133,7 @@ All notable changes to this project will be documented in this file.
 
 ## Version History
 
+- **v2.0.0**: Service Locator Extensions, Optimized Editor, Auto-Refresh Tables
 - **v1.2.0**: Enhanced Table System, UI Toolkit Editor, Improved API
 - **v1.1.0**: Basic Database Functionality, Service Locator, Editor Tools
 - **v1.0.0**: Initial Release
