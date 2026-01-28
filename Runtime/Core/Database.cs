@@ -189,6 +189,100 @@ namespace THEBADDEST.DatabaseModule
 					yield return singleEntityComponent;
 			}
 		}
+
+		/// <summary>
+		/// Removes a table from the database.
+		/// </summary>
+		/// <param name="table">The table to remove</param>
+		/// <returns>True if removed successfully, false otherwise</returns>
+		public bool RemoveTable(TableBase table)
+		{
+			if (table == null) return false;
+
+			var removed = tables.Remove(table);
+			if (removed)
+			{
+				tableDictionary.Remove(table.GetTableName());
+				Debug.Log($"Table '{table.GetTableName()}' removed successfully.");
+			}
+			return removed;
+		}
+
+		/// <summary>
+		/// Removes a DatabaseComponent from the database.
+		/// </summary>
+		/// <param name="component">The component to remove</param>
+		/// <returns>True if removed successfully, false otherwise</returns>
+		public bool RemoveComponent(DatabaseComponent component)
+		{
+			if (component == null) return false;
+
+			var removed = components.Remove(component);
+			if (removed)
+			{
+				Debug.Log($"Component '{component.GetComponentName()}' removed successfully.");
+			}
+			return removed;
+		}
+
+		/// <summary>
+		/// Removes a SingleEntityComponent from the database.
+		/// </summary>
+		/// <param name="singleEntityComponent">The single entity component to remove</param>
+		/// <returns>True if removed successfully, false otherwise</returns>
+		public bool RemoveSingleEntityComponent(SingleEntityComponentBase singleEntityComponent)
+		{
+			if (singleEntityComponent == null) return false;
+
+			var removed = singleEntityComponents.Remove(singleEntityComponent);
+			if (removed)
+			{
+				Debug.Log($"Single Entity Component '{singleEntityComponent.GetComponentName()}' removed successfully.");
+			}
+			return removed;
+		}
+
+		/// <summary>
+		/// Clears all tables from the database.
+		/// </summary>
+		public void ClearTables()
+		{
+			tables.Clear();
+			tableDictionary.Clear();
+			Debug.Log("All tables cleared from database.");
+		}
+
+		/// <summary>
+		/// Clears all DatabaseComponents from the database.
+		/// </summary>
+		public void ClearComponents()
+		{
+			components.Clear();
+			Debug.Log("All components cleared from database.");
+		}
+
+		/// <summary>
+		/// Clears all SingleEntityComponents from the database.
+		/// </summary>
+		public void ClearSingleEntityComponents()
+		{
+			singleEntityComponents.Clear();
+			Debug.Log("All single entity components cleared from database.");
+		}
+
+		/// <summary>
+		/// Gets a component by its display name.
+		/// </summary>
+		/// <param name="componentName">The component's display name</param>
+		/// <returns>The component if found, null otherwise</returns>
+		public IDatabaseComponent GetComponentByName(string componentName)
+		{
+			if (string.IsNullOrEmpty(componentName))
+				return null;
+
+			return GetAllComponents()
+				.FirstOrDefault(c => c != null && c.GetComponentName() == componentName);
+		}
 	}
 
 
