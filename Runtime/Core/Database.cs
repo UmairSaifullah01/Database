@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 
@@ -13,6 +14,12 @@ namespace THEBADDEST.DatabaseModule
 
 		[SerializeField]
 		private List<TableBase> tables = new List<TableBase>();
+
+		[SerializeField]
+		private List<DatabaseComponent> components = new List<DatabaseComponent>();
+
+		[SerializeField]
+		private List<SingleEntityComponentBase> singleEntityComponents = new List<SingleEntityComponentBase>();
 
 		#region Global Access
 		/// <summary>
@@ -45,6 +52,7 @@ namespace THEBADDEST.DatabaseModule
 		{
 			tableDictionary.Clear();
 
+			// Initialize tables
 			foreach (var table in tables)
 			{
 				if (table == null) continue;
@@ -57,6 +65,24 @@ namespace THEBADDEST.DatabaseModule
 				else
 				{
 					Debug.LogWarning($"Duplicate table with name '{tableName}' found: {table.name}");
+				}
+			}
+
+			// Initialize components
+			foreach (var component in components)
+			{
+				if (component != null)
+				{
+					component.Initialize();
+				}
+			}
+
+			// Initialize single entity components
+			foreach (var singleEntityComponent in singleEntityComponents)
+			{
+				if (singleEntityComponent != null)
+				{
+					singleEntityComponent.Initialize();
 				}
 			}
 		}
@@ -98,6 +124,69 @@ namespace THEBADDEST.DatabaseModule
 			else
 			{
 				Debug.LogWarning($"Table with name '{tableName}' is already registered.");
+			}
+		}
+
+		/// <summary>
+		/// Adds a DatabaseComponent to the database.
+		/// </summary>
+		/// <param name="component">The component to add</param>
+		public void AddComponent(DatabaseComponent component)
+		{
+			if (component == null) return;
+
+			if (!components.Contains(component))
+			{
+				components.Add(component);
+				Debug.Log($"Component '{component.GetComponentName()}' added successfully.");
+			}
+			else
+			{
+				Debug.LogWarning($"Component '{component.GetComponentName()}' is already registered.");
+			}
+		}
+
+		/// <summary>
+		/// Adds a SingleEntityComponent to the database.
+		/// </summary>
+		/// <param name="singleEntityComponent">The single entity component to add</param>
+		public void AddSingleEntityComponent(SingleEntityComponentBase singleEntityComponent)
+		{
+			if (singleEntityComponent == null) return;
+
+			if (!singleEntityComponents.Contains(singleEntityComponent))
+			{
+				singleEntityComponents.Add(singleEntityComponent);
+				Debug.Log($"Single Entity Component '{singleEntityComponent.GetComponentName()}' added successfully.");
+			}
+			else
+			{
+				Debug.LogWarning($"Single Entity Component '{singleEntityComponent.GetComponentName()}' is already registered.");
+			}
+		}
+
+		/// <summary>
+		/// Gets all components (tables, components, and single entity components) as a unified list.
+		/// </summary>
+		/// <returns>An enumerable of all IDatabaseComponent instances</returns>
+		public IEnumerable<IDatabaseComponent> GetAllComponents()
+		{
+			foreach (var table in tables)
+			{
+				if (table != null)
+					yield return table;
+			}
+
+			foreach (var component in components)
+			{
+				if (component != null)
+					yield return component;
+			}
+
+			foreach (var singleEntityComponent in singleEntityComponents)
+			{
+				if (singleEntityComponent != null)
+					yield return singleEntityComponent;
 			}
 		}
 	}
