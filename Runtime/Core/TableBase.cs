@@ -5,7 +5,7 @@ namespace THEBADDEST.DatabaseModule
 {
 
 
-	public abstract class TableBase : ScriptableObject ,ITable
+	public abstract class TableBase : ScriptableObject, ITable, IDatabaseComponent
 	{
 		/// <summary>
 		/// Returns the table name for identification.
@@ -16,6 +16,15 @@ namespace THEBADDEST.DatabaseModule
 		/// Initializes the table. Can be overridden for custom setup.
 		/// </summary>
 		public virtual void Initialize() { }
+
+		/// <summary>
+		/// Gets the component name for display in the Database editor.
+		/// </summary>
+		/// <returns>The table name</returns>
+		public virtual string GetComponentName()
+		{
+			return GetTableName();
+		}
 	}
 
 

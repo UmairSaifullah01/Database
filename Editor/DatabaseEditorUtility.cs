@@ -41,6 +41,59 @@ namespace THEBADDEST.DatabaseModule
 			Debug.Log($"Auto-registered {tableAssets.Count} tables to the Database.");
 		}
 
+		[MenuItem("Tools/THEBADDEST/Database/Auto-Register All Components")]
+		public static void AutoRegisterAllComponents()
+		{
+			var database = FindOrCreateDatabase();
+			int registeredCount = 0;
+
+			// Register tables
+			var tableAssets = AssetDatabase.FindAssets("t:ScriptableObject")
+				.Select(AssetDatabase.GUIDToAssetPath)
+				.Select(AssetDatabase.LoadAssetAtPath<ScriptableObject>)
+				.Where(obj => obj is TableBase)
+				.Cast<TableBase>()
+				.ToList();
+
+			foreach (var table in tableAssets)
+			{
+				database.AddTable(table);
+				registeredCount++;
+			}
+
+			// Register DatabaseComponents
+			var componentAssets = AssetDatabase.FindAssets("t:ScriptableObject")
+				.Select(AssetDatabase.GUIDToAssetPath)
+				.Select(AssetDatabase.LoadAssetAtPath<ScriptableObject>)
+				.Where(obj => obj is DatabaseComponent)
+				.Cast<DatabaseComponent>()
+				.ToList();
+
+			foreach (var component in componentAssets)
+			{
+				database.AddComponent(component);
+				registeredCount++;
+			}
+
+			// Register SingleEntityComponents
+			var singleEntityAssets = AssetDatabase.FindAssets("t:ScriptableObject")
+				.Select(AssetDatabase.GUIDToAssetPath)
+				.Select(AssetDatabase.LoadAssetAtPath<ScriptableObject>)
+				.Where(obj => obj is SingleEntityComponentBase)
+				.Cast<SingleEntityComponentBase>()
+				.ToList();
+
+			foreach (var singleEntity in singleEntityAssets)
+			{
+				database.AddSingleEntityComponent(singleEntity);
+				registeredCount++;
+			}
+
+			EditorUtility.SetDirty(database);
+			AssetDatabase.SaveAssetIfDirty(database);
+			Debug.Log($"Auto-registered {registeredCount} components (tables: {tableAssets.Count}, components: {componentAssets.Count}, single entities: {singleEntityAssets.Count}) to the Database.");
+		}
+
 		[MenuItem("Tools/THEBADDEST/Database/Create Table Drive Class")]
 		public static void CreateTableDriveClass()
 		{
@@ -180,6 +233,100 @@ public class {className} : TableBase
 			serializedObject.ApplyModifiedProperties();
 			EditorUtility.SetDirty(database);
 			AssetDatabase.SaveAssetIfDirty(database);
+		}
+
+		/// <summary>
+		/// Creates a DatabaseComponent for the selected ScriptableObject.
+		/// Appears in the context menu when right-clicking a ScriptableObject.
+		/// </summary>
+		[MenuItem("CONTEXT/ScriptableObject/Create Database Component", false, 1000)]
+		public static void CreateDatabaseComponent(MenuCommand command)
+		{
+			var targetScriptable = command.context as ScriptableObject;
+			if (targetScriptable == null)
+			{
+				Debug.LogWarning("Selected object is not a ScriptableObject.");
+				return;
+			}
+
+			// Skip if it's already a DatabaseComponent or TableBase to avoid recursion
+			if (targetScriptable is DatabaseComponent || targetScriptable is TableBase || targetScriptable is SingleEntityComponentBase)
+			{
+				Debug.LogWarning("Cannot create DatabaseComponent for DatabaseComponent, TableBase, or SingleEntityComponent.");
+				return;
+			}
+
+			// Get the path of the target ScriptableObject
+			string targetPath = AssetDatabase.GetAssetPath(targetScriptable);
+			if (string.IsNullOrEmpty(targetPath))
+			{
+				Debug.LogWarning("Could not get asset path for the selected ScriptableObject.");
+				return;
+			}
+
+			// Get directory and create new path for DatabaseComponent
+			string directory = Path.GetDirectoryName(targetPath);
+			string fileName = Path.GetFileNameWithoutExtension(targetPath);
+			string newPath = Path.Combine(directory, $"{fileName}DBComponent.asset");
+
+			// Ensure unique filename
+			newPath = AssetDatabase.GenerateUniqueAssetPath(newPath);
+
+			// Create DatabaseComponent instance
+			var dbComponent = ScriptableObject.CreateInstance<DatabaseComponent>();
+			dbComponent.name = $"{fileName}DBComponent";
+			
+			// Set the target scriptable using public property
+			dbComponent.TargetScriptable = targetScriptable;
+			
+			// Set the component name using SerializedObject (private field)
+			var serializedObject = new SerializedObject(dbComponent);
+			var componentNameProperty = serializedObject.FindProperty("componentName");
+			
+			if (componentNameProperty != null)
+			{
+				componentNameProperty.stringValue = fileName;
+				serializedObject.ApplyModifiedProperties();
+			}
+
+			// Create asset
+			AssetDatabase.CreateAsset(dbComponent, newPath);
+			AssetDatabase.SaveAssets();
+			AssetDatabase.Refresh();
+
+			// Select the newly created asset
+			EditorUtility.FocusProjectWindow();
+			Selection.activeObject = dbComponent;
+			EditorGUIUtility.PingObject(dbComponent);
+
+			Debug.Log($"Created DatabaseComponent '{dbComponent.name}' for '{targetScriptable.name}' at '{newPath}'.");
+
+			// Optionally add to Database
+			var database = FindOrCreateDatabase();
+			if (database != null)
+			{
+				database.AddComponent(dbComponent);
+				EditorUtility.SetDirty(database);
+				AssetDatabase.SaveAssetIfDirty(database);
+				Debug.Log($"Added DatabaseComponent '{dbComponent.name}' to Database.");
+			}
+		}
+
+		/// <summary>
+		/// Validates if the context menu item should be enabled.
+		/// </summary>
+		[MenuItem("CONTEXT/ScriptableObject/Create Database Component", true)]
+		public static bool ValidateCreateDatabaseComponent(MenuCommand command)
+		{
+			var targetScriptable = command.context as ScriptableObject;
+			if (targetScriptable == null)
+				return false;
+
+			// Disable for DatabaseComponent, TableBase, and SingleEntityComponentBase
+			if (targetScriptable is DatabaseComponent || targetScriptable is TableBase || targetScriptable is SingleEntityComponentBase)
+				return false;
+
+			return true;
 		}
 	}
 

@@ -4,7 +4,16 @@
 
 The Database Package is a flexible and extensible framework for managing data within Unity. It provides a set of classes and interfaces that allow you to create and manage databases, tables, and data with enterprise-level features like indexing, querying, and sorting.
 
-## ✨ New Features in v2.0
+## ✨ New Features in v2.1
+
+### 🎯 Component System Architecture
+
+- **IDatabaseComponent Interface**: Unified interface for all database components
+  - `TableBase` - Tables with multiple records
+  - `DatabaseComponent` - Wrapper for any ScriptableObject (e.g., SoundSystem)
+  - `SingleEntityComponent<T>` - Single entity/record components (like Table<T> but with one record)
+- **Unified Component Management**: All components stored and managed in Database
+- **Component-Based Editor**: Unified editor view showing all components (tables, components, single entities)
 
 ### 🚀 Service Locator Extensions
 
@@ -17,9 +26,29 @@ The Database Package is a flexible and extensible framework for managing data wi
 
 ### 🛠️ Enhanced Database Editor
 
+- **Unified Component View**: Left panel shows all components (tables, DatabaseComponents, SingleEntityComponents)
+- **Component Details Panel**: Right panel shows inspector for selected component
+- **Auto-Register All Components**: Menu option to auto-register all component types
 - **Optimized Performance**: Dictionary-based editor caching and TypeCache integration
-- **Auto-Refresh**: Automatic table discovery and registration on window open
+- **Auto-Refresh**: Automatic component discovery and registration on window open
 - **GameDatabase**: Consistent "GameDatabase" naming and management
+
+### 🧰 New Utility Methods
+
+- **Database Extensions**: Extension methods for easy component access
+  - `database.GetComponentByName()` - Find component by name
+  - `database.GetComponent<T>()` - Get component by type
+  - `database.GetComponents<T>()` - Get all components of type
+  - `database.GetSingleEntityComponent<T>()` - Get single entity component by type
+  - `database.HasComponents()` - Check if database has components
+  - `database.GetComponentCount()` - Get total component count
+- **Database Management**: Remove and clear methods
+  - `database.RemoveTable()` - Remove a table
+  - `database.RemoveComponent()` - Remove a DatabaseComponent
+  - `database.RemoveSingleEntityComponent()` - Remove a SingleEntityComponent
+  - `database.ClearTables()` - Clear all tables
+  - `database.ClearComponents()` - Clear all components
+  - `database.ClearSingleEntityComponents()` - Clear all single entity components
 
 ## ✨ Features from v1.2
 
@@ -50,10 +79,13 @@ The Database Package is a flexible and extensible framework for managing data wi
 
 #### Database.cs
 
-The main database class that manages all tables. Features:
+The main database class that manages all components. Features:
 
 - Global access via `Database.Get<T>()`
-- Table management and initialization
+- Component management (tables, DatabaseComponents, SingleEntityComponents)
+- Component initialization and lifecycle management
+- Add/Remove/Clear methods for all component types
+- Unified component access via `GetAllComponents()`
 - Service locator integration
 
 #### Table.cs
@@ -72,7 +104,27 @@ Abstract base class for all table types:
 
 - Common table functionality
 - Initialization and naming
+- Implements `IDatabaseComponent` interface
 - Extensible design pattern
+
+#### DatabaseComponent.cs
+
+Component that wraps any ScriptableObject for inspection:
+
+- Holds reference to any ScriptableObject (e.g., SoundSystem)
+- Implements `IDatabaseComponent` interface
+- Can be created via CreateAssetMenu
+- Useful for inspecting non-table ScriptableObjects in Database editor
+
+#### SingleEntityComponentBase.cs & SingleEntityComponent&lt;T&gt;
+
+Components for single entity/record management:
+
+- `SingleEntityComponentBase` - Abstract base class
+- `SingleEntityComponent<T>` - Generic implementation (like Table&lt;T&gt; but with one record)
+- Holds a single `T` record in serialized `data` field
+- Implements `IDatabaseComponent` interface
+- Create concrete classes like: `MyEntityComponent : SingleEntityComponent<MyEntityData>`
 
 ### 🔌 Adapters
 
@@ -95,13 +147,21 @@ JSON-based data serialization:
 
 #### TableExtensions.cs
 
-Extension methods for advanced operations:
+Extension methods for advanced table operations:
 
 - **Range Queries**: `Between()`, `Top()`, `Bottom()`
 - **Aggregations**: `Sum()`, `Average()`, `Max()`, `Min()`
 - **Text Search**: `ContainsText()`, `StartsWith()`, `EndsWith()`
 - **Pagination**: `GetPage()`, `GetPageCount()`
 - **Grouping**: `GroupBy()`, `Distinct()`, `Shuffle()`
+
+#### DatabaseExtensions.cs
+
+Extension methods for Database component management:
+
+- **Component Access**: `GetComponentByName()`, `GetComponent<T>()`, `GetComponents<T>()`
+- **Single Entity Access**: `GetSingleEntityComponent<T>()`
+- **Component Queries**: `GetComponentByTarget()`, `HasComponents()`, `GetComponentCount()`
 
 #### TableExamples.cs
 
@@ -147,6 +207,7 @@ Editor utilities for database management:
 
 - Database initialization
 - Auto-registration of tables
+- **Auto-registration of all components** (tables, DatabaseComponents, SingleEntityComponents)
 - Table class generation
 
 #### TableAssetCreatorWindow.cs
@@ -222,7 +283,35 @@ playerTable.AddRange(newPlayers);
 playerTable.RemoveAll(p => !p.isActive);
 ```
 
-### 4. Using Service Locator (v2.0)
+### 4. Working with Components (v2.1)
+
+```csharp
+var database = Database.Instance;
+
+// Create and add a DatabaseComponent
+var soundComponent = ScriptableObject.CreateInstance<DatabaseComponent>();
+soundComponent.TargetScriptable = mySoundSystem;
+database.AddComponent(soundComponent);
+
+// Create and add a SingleEntityComponent
+[CreateAssetMenu(menuName = "Database/PlayerEntity", fileName = "PlayerEntity")]
+public class PlayerEntityComponent : SingleEntityComponent<PlayerData> { }
+
+var playerEntity = ScriptableObject.CreateInstance<PlayerEntityComponent>();
+playerEntity.Data = new PlayerData { playerName = "Bob", score = 200 };
+database.AddSingleEntityComponent(playerEntity);
+
+// Access components using extensions
+var component = database.GetComponentByName("My Component");
+var soundComp = database.GetComponent<DatabaseComponent>();
+var playerComp = database.GetSingleEntityComponent<PlayerData>();
+
+// Get all components
+var allComponents = database.GetAllComponents();
+int totalCount = database.GetComponentCount();
+```
+
+### 5. Using Service Locator (v2.0)
 
 ```csharp
 // Register a service
@@ -293,18 +382,41 @@ int totalPages = playerTable.GetPageCount(10);
 1. **Menu**: Tools → THEBADDEST → Database → Database Editor
 2. **Shortcut**: Alt+Cmd+D (Mac) / Alt+Ctrl+D (Windows)
 
-### Creating Tables
+### Component Management
 
-1. Click "Table" button to show creation controls
-2. Enter table name and select type
-3. Click "Create and Add Table"
-4. Use "Create Table Class" for custom table types
+The Database Editor now shows a unified view of all components:
 
-### Managing Tables
+- **Left Panel**: Lists all components (tables, DatabaseComponents, SingleEntityComponents)
+- **Right Panel**: Shows inspector/details for the selected component
+- **Component Types**:
+  - **Tables**: Full table inspector with entries list
+  - **DatabaseComponents**: Inspector of the referenced ScriptableObject
+  - **SingleEntityComponents**: Inspector showing the single entity data
 
-- **Tabs**: Click table tabs to switch between tables
-- **Close**: Click "x" to remove tables
-- **Refresh**: Click "Refresh" to auto-register new tables
+### Creating Components
+
+**Tables**:
+1. Create a table class inheriting from `Table<T>`
+2. Create asset via CreateAssetMenu
+3. Use "Auto-Register Tables" or manually add to Database
+
+**DatabaseComponents**:
+1. Create asset via CreateAssetMenu: "THEBADDEST/Database/Database Component"
+2. Assign target ScriptableObject
+3. Use "Auto-Register All Components" or manually add to Database
+
+**SingleEntityComponents**:
+1. Create a class: `MyEntityComponent : SingleEntityComponent<MyData>`
+2. Create asset via CreateAssetMenu
+3. Assign data in inspector
+4. Use "Auto-Register All Components" or manually add to Database
+
+### Managing Components
+
+- **Auto-Register**: Use menu "Tools → THEBADDEST → Database → Auto-Register All Components"
+- **Select Component**: Click component name in left panel to view details
+- **Remove**: Use `database.RemoveTable()`, `RemoveComponent()`, or `RemoveSingleEntityComponent()`
+- **Clear All**: Use `database.ClearTables()`, `ClearComponents()`, or `ClearSingleEntityComponents()`
 
 ## 🔧 Performance Tips
 

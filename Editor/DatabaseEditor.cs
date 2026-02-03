@@ -1,6 +1,4 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using THEBADDEST.EditorTools;
 using UnityEditor;
 using UnityEngine;
@@ -13,14 +11,16 @@ namespace THEBADDEST.DatabaseModule
 	public class DatabaseEditor : EditorWindow
 	{
 		private Database database;
-		private Type[] tableTypes;
 		private SerializedObject serializedDatabase;
-		private SerializedProperty tablesProperty;
-		private int selectedIndex = 0;
-		Vector2 scrollVector;
-		Texture2D selectedColorTexture;
-		Texture2D normalColorTexture;
-		private Dictionary<TableBase, Editor> tableEditors = new Dictionary<TableBase, Editor>();
+
+		private List<IDatabaseComponent> allComponents = new List<IDatabaseComponent>();
+		private int selectedComponentIndex = -1;
+		private Dictionary<Object, Editor> componentEditors = new Dictionary<Object, Editor>();
+		private Vector2 scrollPosition;
+
+		private Texture2D selectedColorTexture;
+		private Texture2D normalColorTexture;
+
 		[MenuItem("Tools/THEBADDEST/Database/Database Editor %&d")]
 		public static void ShowWindow()
 		{
@@ -39,21 +39,41 @@ namespace THEBADDEST.DatabaseModule
 				DatabaseEditorUtility.RefreshDatabaseTables(database);
 
 				serializedDatabase = new SerializedObject(database);
-				tablesProperty = serializedDatabase.FindProperty("tables");
 			}
 
-			// Use Unity's TypeCache for optimized type discovery (cached, only updates on assembly changes)
-			tableTypes = TypeCache.GetTypesDerivedFrom<TableBase>()
-								  .Where(type => type.IsClass && !type.IsAbstract)
-								  .ToArray();
-			// selectedColorTexture = EditorUtils.ColorToTexture2D(new Color(0f, 0f, 1f, 0.2f));
 			selectedColorTexture = EditorUtils.ColorToTexture2D(new Color(1f, 1f, 1f, 0.2f));
 			normalColorTexture = EditorUtils.ColorToTexture2D(new Color(0.1f, 0.1f, 0.1f, 0.2f));
+
+			RefreshComponents();
 		}
 
 		void OnDisable()
 		{
-			tableEditors.Clear();
+			// Clean up cached editors
+			foreach (var kvp in componentEditors)
+			{
+				if (kvp.Value != null)
+				{
+					DestroyImmediate(kvp.Value);
+				}
+			}
+			componentEditors.Clear();
+			allComponents.Clear();
+		}
+
+		void RefreshComponents()
+		{
+			allComponents.Clear();
+			if (database != null)
+			{
+				allComponents.AddRange(database.GetAllComponents());
+			}
+
+			// Reset selection if out of bounds
+			if (selectedComponentIndex >= allComponents.Count)
+			{
+				selectedComponentIndex = allComponents.Count > 0 ? 0 : -1;
+			}
 		}
 
 		void OnGUI()
@@ -63,13 +83,25 @@ namespace THEBADDEST.DatabaseModule
 				serializedDatabase.Update();
 			}
 
+			// Refresh components if database changed
+			if (database != null)
+			{
+				var currentCount = allComponents.Count;
+				RefreshComponents();
+				if (currentCount != allComponents.Count)
+				{
+					// Components changed, reset selection
+					selectedComponentIndex = allComponents.Count > 0 ? 0 : -1;
+				}
+			}
+
 			DrawTitle();
 			GUILayout.BeginHorizontal();
-			GUILayout.BeginVertical(EditorUtils.Window, GUILayout.Width(150), GUILayout.ExpandHeight(true));
-			DrawLeftSide();
+			GUILayout.BeginVertical(EditorUtils.Window, GUILayout.Width(200), GUILayout.ExpandHeight(true));
+			DrawComponentsList();
 			GUILayout.EndVertical();
 			GUILayout.BeginVertical(EditorUtils.Window);
-			DrawRightSide();
+			DrawComponentDetails();
 			GUILayout.EndVertical();
 			GUILayout.EndHorizontal();
 
@@ -101,12 +133,15 @@ namespace THEBADDEST.DatabaseModule
 			GUILayout.EndVertical();
 			EditorGUILayout.Space(10);
 		}
-		void DrawLeftSide()
+		void DrawComponentsList()
 		{
+			EditorUtils.DrawHeader("Components");
 
-			EditorUtils.DrawHeader("Table Names");
-			if (tablesProperty == null || tablesProperty.arraySize == 0)
+			if (allComponents.Count == 0)
+			{
+				EditorGUILayout.HelpBox("No database components registered.\n\nAdd tables, components, or single entity components to the Database asset.", MessageType.Info);
 				return;
+			}
 
 			var selectedStyle = new GUIStyle(GUI.skin.button)
 			{
@@ -125,37 +160,87 @@ namespace THEBADDEST.DatabaseModule
 				},
 				border = new RectOffset(-1, -1, -1, -1),
 			};
-			for (int i = 0; i < tablesProperty.arraySize; i++)
+
+			for (int i = 0; i < allComponents.Count; i++)
 			{
-				var tableProp = tablesProperty.GetArrayElementAtIndex(i);
-				var tableObj = tableProp.objectReferenceValue as TableBase;
-				if (tableObj == null) continue;
-				if (GUILayout.Button(tableObj.name, selectedIndex == i ? pressedStyle : selectedStyle, GUILayout.Height(30)))
+				var component = allComponents[i];
+				if (component == null) continue;
+
+				string displayName = component.GetComponentName();
+				if (string.IsNullOrEmpty(displayName))
 				{
-					selectedIndex = i;
+					displayName = component.GetType().Name;
+				}
+
+				if (GUILayout.Button(displayName, selectedComponentIndex == i ? pressedStyle : selectedStyle, GUILayout.Height(30)))
+				{
+					selectedComponentIndex = i;
 				}
 			}
 		}
 
-		void DrawRightSide()
+		void DrawComponentDetails()
 		{
-			EditorUtils.DrawHeader("Table details");
-			if (tablesProperty == null || tablesProperty.arraySize == 0)
-				return;
-			var tableProp = tablesProperty.GetArrayElementAtIndex(selectedIndex);
-			var tableObj = tableProp.objectReferenceValue as TableBase;
-			if (tableObj == null) return;
+			EditorUtils.DrawHeader("Details");
 
-			// Check if editor exists in dictionary, otherwise create and add it
-			if (!tableEditors.TryGetValue(tableObj, out Editor editor))
+			if (allComponents.Count == 0 || selectedComponentIndex < 0 || selectedComponentIndex >= allComponents.Count)
 			{
-				editor = Editor.CreateEditor(tableObj);
-				tableEditors[tableObj] = editor;
+				EditorGUILayout.HelpBox("Select a component from the list on the left.", MessageType.Info);
+				return;
+			}
+
+			var component = allComponents[selectedComponentIndex];
+			if (component == null)
+			{
+				EditorGUILayout.HelpBox("Selected component is not available.", MessageType.Warning);
+				return;
+			}
+
+			Object targetObject = null;
+			Editor editor = null;
+
+			// Determine the target object based on component type
+			if (component is TableBase tableBase)
+			{
+				targetObject = tableBase;
+			}
+			else if (component is DatabaseComponent databaseComponent)
+			{
+				targetObject = databaseComponent.TargetScriptable;
+				if (targetObject == null)
+				{
+					EditorGUILayout.HelpBox("This DatabaseComponent has no ScriptableObject assigned.", MessageType.Info);
+					EditorGUILayout.Space();
+					EditorGUILayout.ObjectField("Target Scriptable", databaseComponent.TargetScriptable, typeof(ScriptableObject), false);
+					return;
+				}
+			}
+			else if (component is SingleEntityComponentBase singleEntityComponentBase)
+			{
+				// For SingleEntityComponent, show the component itself (which contains the serialized data field)
+				targetObject = singleEntityComponentBase;
+			}
+
+			if (targetObject == null)
+			{
+				EditorGUILayout.HelpBox($"Unknown component type: {component.GetType().Name}", MessageType.Warning);
+				return;
+			}
+
+			// Get or create editor for the target object
+			if (!componentEditors.TryGetValue(targetObject, out editor) || editor == null || editor.target != targetObject)
+			{
+				if (editor != null)
+				{
+					DestroyImmediate(editor);
+				}
+				editor = Editor.CreateEditor(targetObject);
+				componentEditors[targetObject] = editor;
 			}
 
 			if (editor != null)
 			{
-				scrollVector = EditorGUILayout.BeginScrollView(scrollVector);
+				scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
 				editor.OnInspectorGUI();
 				EditorGUILayout.EndScrollView();
 			}
