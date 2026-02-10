@@ -17,13 +17,15 @@ namespace THEBADDEST.DatabaseModule
 		
 		public override void Deserialize<T>(ITable<T> table)
 		{
-			if(string.IsNullOrEmpty(json)) return;
+			if (string.IsNullOrEmpty(json)) return;
 			var records = JsonUtility.FromJson<JsonWrapper<T>>(json).records;
-			foreach (var record in records)
+			table.Clear();
+			if (records != null)
 			{
-				if (!table.Entries.Contains(record))
+				foreach (var record in records)
 				{
-					table.AddRecord(record);
+					if (record != null)
+						table.AddRecord(record);
 				}
 			}
 		}

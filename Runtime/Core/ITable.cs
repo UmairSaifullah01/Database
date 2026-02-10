@@ -50,6 +50,11 @@ namespace THEBADDEST.DatabaseModule
 		/// <param name="id">The ID of the record to update.</param>
 		/// <param name="record">The new record data.</param>
 		void UpdateRecord(int id, TRecord record);
+
+		/// <summary>
+		/// Removes all records from the table.
+		/// </summary>
+		void Clear();
 	}
 
 }

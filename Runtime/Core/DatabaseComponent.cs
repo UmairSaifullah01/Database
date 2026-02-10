@@ -26,15 +26,14 @@ namespace THEBADDEST.DatabaseModule
 
 		/// <summary>
 		/// Gets the component name for display in the Database editor.
+		/// Returns the ScriptableObject name when assigned, otherwise a fallback.
 		/// </summary>
 		/// <returns>The component's display name</returns>
 		public string GetComponentName()
 		{
 			if (targetScriptable != null)
-			{
-				return $"{componentName} ({targetScriptable.name})";
-			}
-			return componentName;
+				return targetScriptable.name;
+			return !string.IsNullOrEmpty(componentName) ? componentName : "Unassigned";
 		}
 
 		/// <summary>

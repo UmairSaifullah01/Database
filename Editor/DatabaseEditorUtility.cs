@@ -97,25 +97,13 @@ namespace THEBADDEST.DatabaseModule
 		[MenuItem("Tools/THEBADDEST/Database/Create Table Drive Class")]
 		public static void CreateTableDriveClass()
 		{
-			// Prompt the user to select the name of the derived class
-			var tableClassName = EditorUtility.DisplayDialogComplex(
-				"Create Table Drive Class",
-				"Enter the name of the new table class derived from TableBase:",
-				"Create", "Cancel", "");
-
-			if (tableClassName == 1) // Cancel button
-				return;
-
-			string className = "NewTable";
-
-			// Create the class file
-			var filePath = EditorUtility.SaveFilePanel("Save Table Drive Class", "Assets", className, "cs");
-			className = Path.GetFileNameWithoutExtension(filePath).Replace("Table","");
+			var filePath = EditorUtility.SaveFilePanel("Save Table Drive Class", "Assets", "NewTable.cs", "cs");
 			if (string.IsNullOrWhiteSpace(filePath))
 			{
 				Debug.LogWarning("Table drive class creation cancelled.");
 				return;
 			}
+			var className = Path.GetFileNameWithoutExtension(filePath).Replace("Table", "");
 
 			var directory = Path.GetDirectoryName(filePath);
 			if (!Directory.Exists(directory))
