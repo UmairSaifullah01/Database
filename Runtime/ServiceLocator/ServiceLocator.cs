@@ -3,18 +3,12 @@ using System.Collections.Generic;
 
 namespace THEBADDEST
 {
-	public class ServiceLocator : IServiceLocator
+	public partial class ServiceLocator : IServiceLocator
 	{
-		private static readonly Lazy<ServiceLocator> _global =
-			new Lazy<ServiceLocator>(() => new ServiceLocator());
-
 		private readonly Dictionary<Type, object> _services = new Dictionary<Type, object>();
 
-		// Private constructor to prevent instantiation
+		// Private constructor to prevent instantiation (used by static partial)
 		private ServiceLocator() { }
-
-		// Public property for global access
-		public static ServiceLocator Global => _global.Value;
 
 		public void RegisterService<TService>(TService service)
 		{
@@ -39,6 +33,18 @@ namespace THEBADDEST
 			}
 
 			throw new InvalidOperationException($"Service of type {typeof(TService).Name} is not registered.");
+		}
+
+		public bool TryGetService<TService>(out TService service)
+		{
+			if (_services.TryGetValue(typeof(TService), out var obj))
+			{
+				service = (TService)obj;
+				return true;
+			}
+
+			service = default;
+			return false;
 		}
 
 		public void Clear()
