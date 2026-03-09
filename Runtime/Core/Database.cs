@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -11,6 +12,7 @@ namespace THEBADDEST.DatabaseModule
 	public class Database : ScriptableObject, IDatabase
 	{
 		private Dictionary<string, TableBase> tableDictionary = new Dictionary<string, TableBase>();
+		private Dictionary<Type, TableBase> tableTypeDictionary = new Dictionary<Type, TableBase>();
 
 		[SerializeField]
 		private List<TableBase> tables = new List<TableBase>();
@@ -51,6 +53,7 @@ namespace THEBADDEST.DatabaseModule
 		public void Initialize()
 		{
 			tableDictionary.Clear();
+			tableTypeDictionary.Clear();
 
 			// Initialize tables
 			foreach (var table in tables)
@@ -60,6 +63,11 @@ namespace THEBADDEST.DatabaseModule
 				var tableName = table.GetTableName();
 				if (tableDictionary.TryAdd(tableName, table))
 				{
+					var tableType = table.GetType();
+					if (tableTypeDictionary.ContainsKey(tableType))
+						Debug.LogWarning($"Duplicate table type '{tableType.Name}' found: {table.name}");
+					else
+						tableTypeDictionary[tableType] = table;
 					table.Initialize();
 				}
 				else
@@ -89,11 +97,8 @@ namespace THEBADDEST.DatabaseModule
 
 		public T GetTable<T>() where T : TableBase
 		{
-			foreach (var table in tables)
-			{
-				if (table is T tTable)
-					return tTable;
-			}
+			if (tableTypeDictionary.TryGetValue(typeof(T), out var table))
+				return (T)table;
 
 			Debug.LogWarning($"Table of type {typeof(T).Name} not found.");
 			return null;
@@ -118,6 +123,7 @@ namespace THEBADDEST.DatabaseModule
 
 			if (tableDictionary.TryAdd(tableName, table))
 			{
+				tableTypeDictionary[table.GetType()] = table;
 				tables.Add(table);
 				Debug.Log($"Table '{tableName}' added successfully.");
 			}
@@ -203,6 +209,7 @@ namespace THEBADDEST.DatabaseModule
 			if (removed)
 			{
 				tableDictionary.Remove(table.GetTableName());
+				tableTypeDictionary.Remove(table.GetType());
 				Debug.Log($"Table '{table.GetTableName()}' removed successfully.");
 			}
 			return removed;
@@ -249,6 +256,7 @@ namespace THEBADDEST.DatabaseModule
 		{
 			tables.Clear();
 			tableDictionary.Clear();
+			tableTypeDictionary.Clear();
 			Debug.Log("All tables cleared from database.");
 		}
 

@@ -48,6 +48,7 @@ namespace THEBADDEST.DatabaseModule
             var fields = type.GetFields(BindingFlags.Public | BindingFlags.Instance);
             var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.CanRead && p.CanWrite).ToArray();
             var headers = lines[0].Split(',');
+            table.Clear();
             for (int i = 1; i < lines.Length; i++)
             {
                 var values = SplitCsvLine(lines[i]);
@@ -59,19 +60,36 @@ namespace THEBADDEST.DatabaseModule
                     var field = fields.FirstOrDefault(f => f.Name == header);
                     if (field != null)
                     {
-                        field.SetValue(obj, Convert.ChangeType(value, field.FieldType));
+                        field.SetValue(obj, ConvertCsvValue(value, field.FieldType));
                         continue;
                     }
                     var prop = properties.FirstOrDefault(p => p.Name == header);
                     if (prop != null)
-                    {
-                        prop.SetValue(obj, Convert.ChangeType(value, prop.PropertyType));
-                    }
+                        prop.SetValue(obj, ConvertCsvValue(value, prop.PropertyType));
                 }
-                if (!table.Entries.Contains(obj))
-                {
-                    table.AddRecord(obj);
-                }
+                table.AddRecord(obj);
+            }
+        }
+
+        private static object ConvertCsvValue(string value, Type targetType)
+        {
+            var effectiveType = Nullable.GetUnderlyingType(targetType) ?? targetType;
+            if (string.IsNullOrEmpty(value))
+            {
+                if (effectiveType.IsValueType && Nullable.GetUnderlyingType(targetType) == null)
+                    return effectiveType.IsEnum ? Enum.ToObject(effectiveType, 0) : Activator.CreateInstance(effectiveType);
+                return null;
+            }
+            try
+            {
+                if (effectiveType.IsEnum)
+                    return Enum.Parse(effectiveType, value.Trim(), true);
+                return Convert.ChangeType(value, effectiveType);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"SheetTableAdapter: could not convert \"{value}\" to {targetType.Name}: {ex.Message}");
+                return effectiveType.IsValueType && Nullable.GetUnderlyingType(targetType) == null ? Activator.CreateInstance(effectiveType) : null;
             }
         }
 

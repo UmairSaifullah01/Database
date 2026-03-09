@@ -23,16 +23,12 @@ namespace THEBADDEST.DatabaseModule
 
 		/// <summary>
 		/// Gets the component name for display in the Database editor.
+		/// Returns the data object type name (T).
 		/// </summary>
 		/// <returns>The component's display name</returns>
 		public override string GetComponentName()
 		{
-			var baseName = base.GetComponentName();
-			if (string.IsNullOrEmpty(baseName) || baseName == GetType().Name)
-			{
-				return typeof(T).Name;
-			}
-			return baseName;
+			return typeof(T).Name;
 		}
 	}
 }

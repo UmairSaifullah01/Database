@@ -13,6 +13,8 @@ namespace THEBADDEST.DatabaseModule
 		static string DataBasePath = "GameDatabase";
 
 		static IServiceLocator serviceLocator;
+		static bool initialized;
+
 		static DatabaseServiceLocator()
 		{
 			Initialize();
@@ -20,10 +22,15 @@ namespace THEBADDEST.DatabaseModule
 
 		static void Initialize()
 		{
+			if (initialized)
+				return;
 			serviceLocator = ServiceLocator.Global;
 			var database = Resources.Load<Database>(DataBasePath);
+			if (database == null)
+				return;
 			database.Initialize();
 			serviceLocator.RegisterService(database);
+			initialized = true;
 		}
 
 		public static Database DatabaseService()
