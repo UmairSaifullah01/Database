@@ -31,6 +31,7 @@ namespace THEBADDEST.DatabaseModule
 			database.Initialize();
 			serviceLocator.RegisterService(database);
 			initialized = true;
+			if (!Application.isPlaying) initialized = false;
 		}
 
 		public static Database DatabaseService()

@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
+
 
 namespace THEBADDEST
 {
@@ -14,7 +16,7 @@ namespace THEBADDEST
 		{
 			if (service == null)
 			{
-				throw new ArgumentNullException(nameof(service));
+				Debug.LogWarning($"Attempted to register null service of type {typeof(TService).Name}");
 			}
 
 			_services[typeof(TService)] = service;
@@ -32,7 +34,8 @@ namespace THEBADDEST
 				return (TService)service;
 			}
 
-			throw new InvalidOperationException($"Service of type {typeof(TService).Name} is not registered.");
+			Debug.LogWarning($"Service of type {typeof(TService).Name} is not registered.");
+			return default;
 		}
 
 		public bool TryGetService<TService>(out TService service)
